@@ -16,20 +16,17 @@
 #include "uart.h"
 #include "nrf52840.h"
 
-
 //=========================== defines =========================================
 
 #define NUM_PPI_CHANNEL_USED  4
 
-#define SET_TIME_PERIOD       16000000  //1s on 16MHz
-#define SCHEDULED_TIME        16000000  //1s on 16MHz
 #define TIMER_PERIOD          (0xffff>>4)    ///< 0xffff = 2s@32kHz
 
-#define SENDER_LAST_ID        173       //---707
-#define RECEIVER_LAST_ID      172       //---014
+#define SENDER_ID_LAST_BYTE   0xad            //board id ---707
+#define RECEIVER_ID_LAST_BYTE 0xac            //board id ---014
 
-#define CC0                   0               //CC0 using for EoF capture into CC0
-#define CC1                   1               //CC1 using for SoF capture into CC1
+#define EOF_CAPTURE_ID        0               //EOF_CAPTURE_ID using for EoF capture into EOF_CAPTURE_ID
+#define SOF_CAPTURE_ID        1               //SOF_CAPTURE_ID using for SoF capture into SOF_CAPTURE_ID
 
 //-------radio define-------
 #define CHANNEL               16
@@ -37,9 +34,19 @@
 #define LEN_PKT_TO_SEND       20+LENGTH_CRC
 
 //-------PPI define-------
-#define PPI0                   0               //PPI0 using for Radio EoF -> Timer Capture  T1 into CC0
-#define PPI1                   1               //PPI1 using for Radio SoF -> Timer Capture  T2 into CC1
-#define PPI2                   2               //PPI2 using for Timer schedule -> Radio TX 
+#define EOF_CAPTURE_PPI_ID                   0  //EOF_CAPTURE_PPI_ID using for Radio EoF -> Timer Capture  app_vars.t1 into EOF_CAPTURE_ID
+#define SOF_CAPTURE_PPI_ID                   1  //SOF_CAPTURE_PPI_ID using for Radio SoF -> Timer Capture  app_vars.t2 into SOF_CAPTURE_ID
+#define TIMER_COMPARE_RADIO_PPI_ID           2  //TIMER_COMPARE_RADIO_PPI_ID using for Timer schedule -> Radio TX 
+
+//------- timer define -------
+#define TIMER_COMPARE_ID      0
+#define RESPONSE_DELAY        16000           // 16000@16MHz = 1ms
+
+//------
+
+#define NUM_SAMPLES           64
+#define NUM_SAMPLE_MASK       0x3f
+
 //=========================== variables =======================================
 //uint8_t stringToSend[]  = "+002 Ptest.24.00.12.-010\n";
 
@@ -82,6 +89,13 @@ typedef struct {
    volatile       uint8_t uartDone;
    volatile       uint8_t uartSendNow;
    volatile       uint8_t uartToSend[6];
+
+                  uint32_t       t1;
+                  uint32_t       t2;
+
+                  uint16_t       diff_index;
+                  uint32_t       diff[NUM_SAMPLES];
+
 } app_vars_t;
 
 app_vars_t app_vars;
@@ -113,10 +127,9 @@ int mote_main(void) {
 
     while(1) {
 
-        if (board_eui[7] == SENDER_LAST_ID){
+        if (board_eui[7] == SENDER_ID_LAST_BYTE){
             sender_main();
-        }
-        else if (board_eui[7] == RECEIVER_LAST_ID){
+        } else if (board_eui[7] == RECEIVER_ID_LAST_BYTE){
              receiver_main();
         }   
     }  
@@ -125,17 +138,23 @@ int mote_main(void) {
 //=========================== callbacks =======================================
 
 int sender_main(void){
+
+
+    uint32_t tmp;
+    uint16_t i;
+
     board_init();
     timer_init();
-    
-    uint32_t T1;
-    uint32_t T2;
 
     //config PPI
-    ppi_radio_eof_timer_capture(PPI0, CC0);    //using PPI channel 0, EoF capture time value to CC0    T1
-    ppi_enable(PPI0);
-    ppi_radio_sof_timer_capture(PPI1, CC1);    //using PPI channel 1, SoF capture time value to CC1    T2   
-    ppi_enable(PPI1);
+
+    //using PPI channel 0, EoF capture time value to EOF_CAPTURE_ID
+    ppi_radio_eof_timer_capture(EOF_CAPTURE_PPI_ID, EOF_CAPTURE_ID);    
+    ppi_enable(EOF_CAPTURE_PPI_ID);
+
+    //using PPI channel 1, SoF capture time value to SOF_CAPTURE_ID  
+    ppi_radio_sof_timer_capture(SOF_CAPTURE_PPI_ID, SOF_CAPTURE_ID);     
+    ppi_enable(SOF_CAPTURE_PPI_ID);
     
     timer_clear();
     timer_start();
@@ -160,30 +179,14 @@ int sender_main(void){
 
     // freq type only effects on scum port
     radio_setFrequency(CHANNEL, FREQ_RX);
-
-    // prepare packet
-    //app_vars.txpk_buf[0] = 1; // Packet number or other data
-    //app_vars.txpk_len = sizeof(app_vars.txpk_buf);
-
-    // send packet
-    //radio_loadPacket(app_vars.txpk_buf, app_vars.txpk_len);
-    //radio_txEnable();
-    //leds_error_on();
-    //radio_txNow();
-
     
     radio_rxEnable();
-    //leds_error_off();
-    //leds_sync_on();
-    //radio_rxNow();
     
     app_vars.state = APP_STATE_RX;
     
     // start by a transmit
     app_vars.flags |= APP_FLAG_TIMER;
-    //app_vars.flags &= ~APP_FLAG_TIMER;
-    //while(!(NRF_RADIO->EVENTS_END == 1)){
-    //}                 //waiting for receiving a packet
+
     while(1) {
 
         while(app_vars.flags==0x00) {
@@ -199,7 +202,7 @@ int sender_main(void){
                 switch (app_vars.state) {
                     case APP_STATE_RX:
                         // started receiving a packet
-                        T2 = timer_getCapturedValue(CC1);
+                        app_vars.t2 = timer_getCapturedValue(SOF_CAPTURE_ID);
                         // led
                         leds_error_on();
                         break;
@@ -232,11 +235,9 @@ int sender_main(void){
                                                 &app_vars.rxpk_crc
                                             );
 
-                        //T1 = timer_getCapturedValue(CC0);
-                       //T2 = timer_getCapturedValue(CC1);
+                        tmp = app_vars.t2 - app_vars.t1;
+                        app_vars.diff[app_vars.diff_index++&NUM_SAMPLE_MASK] = tmp;
 
-                        uint32_t tmp = T2 - T1;
-                        int i = 0;
                         app_vars.uartToSend[i++] = (uint8_t)((tmp >> 24) & 0x000000ff);
                         app_vars.uartToSend[i++] = (uint8_t)((tmp >> 16) & 0x000000ff);
                         app_vars.uartToSend[i++] = (uint8_t)((tmp >> 8) & 0x000000ff);
@@ -265,7 +266,7 @@ int sender_main(void){
                         radio_rxNow();
                         app_vars.state = APP_STATE_RX;
 
-                        T1 = timer_getCapturedValue(CC0);
+                        app_vars.t1 = timer_getCapturedValue(EOF_CAPTURE_ID);
 
                         // led
                         leds_sync_off();
@@ -308,8 +309,13 @@ int receiver_main(void){
     timer_init();
     
     //config PPI
-    ppi_timer_compare_radio_start(PPI2,2);
-    ppi_enable(PPI2);
+
+    //using PPI channel 0, EoF capture time value to EOF_CAPTURE_ID    app_vars.t1
+    ppi_radio_eof_timer_capture(EOF_CAPTURE_PPI_ID, EOF_CAPTURE_ID);    
+    ppi_enable(EOF_CAPTURE_PPI_ID);
+
+    ppi_timer_compare_radio_start(TIMER_COMPARE_RADIO_PPI_ID, TIMER_COMPARE_ID);
+    ppi_enable(TIMER_COMPARE_RADIO_PPI_ID);
 
     timer_clear();
     timer_start();
@@ -325,24 +331,12 @@ int receiver_main(void){
 
     radio_setStartFrameCb(cb_startFrame);
     radio_setEndFrameCb(cb_endFrame);
-    
-    // start bsp timer
-    sctimer_set_callback(cb_timer);
-    sctimer_setCompare(sctimer_readCounter()+TIMER_PERIOD);
-    sctimer_enable();
 
     radio_rxEnable();
-    //leds_sync_on();
     radio_rxNow();
 
     app_vars.state = APP_STATE_RX;
     
-    // start by a listening
-    //app_vars.flags |= APP_FLAG_START_FRAME;
-
-    // start by a transmit
-    app_vars.flags |= APP_FLAG_TIMER;
-
     while(1) {
         while(app_vars.flags == 0x00) {
             board_sleep();
@@ -356,11 +350,7 @@ int receiver_main(void){
                 //start of frame
                 switch (app_vars.state) {
                     case APP_STATE_RX:
-                        // started receiving a packet
-                        //timer_stop();
-                        //timer_clear();
-                        //timer_schedule(2,160000);    //16000 = 1ms
-                        //timer_start();
+
                         // led
                         leds_error_on();
                         break;
@@ -392,18 +382,11 @@ int receiver_main(void){
                                     &app_vars.rxpk_crc
                                 );
                         
-                        //timer_schedule(2,16000);    //16000 = 1ms
-                        timer_stop();
-                        timer_clear();
-                        timer_schedule(2,160000);    //16000 = 1ms
-                        timer_start();
-                        
+                        timer_schedule(TIMER_COMPARE_ID, timer_getCapturedValue(EOF_CAPTURE_ID)+RESPONSE_DELAY);                        
 
                         radio_loadPacket(app_vars.txpk_buf, app_vars.txpk_len);
                         radio_txEnable();
                         
-                        //delay_ms(5*20);
-                        //radio_txNow();
                         app_vars.state = APP_STATE_TX;
                         // led
                         leds_error_off();
@@ -424,20 +407,6 @@ int receiver_main(void){
                 }
                 // clear flag
                 app_vars.flags &= ~APP_FLAG_END_FRAME;
-            }
-
-            //==== APP_FLAG_TIMER
-
-            if (app_vars.flags & APP_FLAG_TIMER){
-                // timer fired
-
-                if (app_vars.state==APP_STATE_TX){
-                    radio_rxEnable();
-                    radio_rxNow();
-                    app_vars.state = APP_STATE_RX;
-                }
-
-                app_vars.flags &= ~APP_FLAG_TIMER;
             }
         }
     }
@@ -501,14 +470,4 @@ void cb_timer(void) {
     app_dbg.num_timer++;
 
     sctimer_setCompare(sctimer_readCounter()+TIMER_PERIOD);
-}
-
-void delay_ms(int16_t times)
-{
-    // 计算延时的时钟周期数
-    uint32_t cycles = times * 1000 * (SystemCoreClock / 1000000) / 3;
-    // 使用DWT寄存器进行延时
-    DWT->CYCCNT = 0;
-    while (DWT->CYCCNT < cycles)
-        ;
 }
