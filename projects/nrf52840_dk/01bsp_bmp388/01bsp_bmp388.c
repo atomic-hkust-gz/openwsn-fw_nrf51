@@ -95,16 +95,16 @@ int mote_main(void) {
 
         i=0;
         app_vars.temp_f = bmp388_read_temperature();
-        app_vars.uartToSend[i++] = (uint8_t)((((uint32_t)app_vars.temp_f)>>8) & 0x00ff);
-        app_vars.uartToSend[i++] = (uint8_t)((((uint32_t)app_vars.temp_f)>>0) & 0x00ff);
-        app_vars.uartToSend[i++] = (uint8_t)((((uint32_t)app_vars.temp_f)>>8) & 0x00ff);
-        app_vars.uartToSend[i++] = (uint8_t)((((uint32_t)app_vars.temp_f)>>0) & 0x00ff);
+        app_vars.uartToSend[i++] = (uint8_t)((((uint32_t)app_vars.temp_f)>>24) & 0x000000ff);
+        app_vars.uartToSend[i++] = (uint8_t)((((uint32_t)app_vars.temp_f)>>16) & 0x000000ff);
+        app_vars.uartToSend[i++] = (uint8_t)((((uint32_t)app_vars.temp_f)>>8)  & 0x000000ff);
+        app_vars.uartToSend[i++] = (uint8_t)((((uint32_t)app_vars.temp_f)>>0)  & 0x000000ff);
         
         app_vars.pressure_f = bmp388_read_pressure();
-        app_vars.uartToSend[i++] = (uint8_t)((((uint32_t)app_vars.pressure_f)>>8) & 0x00ff);
-        app_vars.uartToSend[i++] = (uint8_t)((((uint32_t)app_vars.pressure_f)>>0) & 0x00ff);
-        app_vars.uartToSend[i++] = (uint8_t)((((uint32_t)app_vars.pressure_f)>>8) & 0x00ff);
-        app_vars.uartToSend[i++] = (uint8_t)((((uint32_t)app_vars.pressure_f)>>0) & 0x00ff);
+        app_vars.uartToSend[i++] = (uint8_t)((((uint32_t)app_vars.pressure_f)>>24) & 0x000000ff);
+        app_vars.uartToSend[i++] = (uint8_t)((((uint32_t)app_vars.pressure_f)>>16) & 0x000000ff);
+        app_vars.uartToSend[i++] = (uint8_t)((((uint32_t)app_vars.pressure_f)>>8)  & 0x000000ff);
+        app_vars.uartToSend[i++] = (uint8_t)((((uint32_t)app_vars.pressure_f)>>0)  & 0x000000ff);
 
         app_vars.uartToSend[i++] = '\r';
         app_vars.uartToSend[i++] = '\n';
