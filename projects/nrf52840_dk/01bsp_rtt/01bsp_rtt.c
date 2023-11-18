@@ -238,6 +238,8 @@ int sender_main(void){
                         tmp = app_vars.t2 - app_vars.t1;
                         app_vars.diff[app_vars.diff_index++&NUM_SAMPLE_MASK] = tmp;
 
+                        uint8_t i = 0;
+
                         app_vars.uartToSend[i++] = (uint8_t)((tmp >> 24) & 0x000000ff);
                         app_vars.uartToSend[i++] = (uint8_t)((tmp >> 16) & 0x000000ff);
                         app_vars.uartToSend[i++] = (uint8_t)((tmp >> 8) & 0x000000ff);
