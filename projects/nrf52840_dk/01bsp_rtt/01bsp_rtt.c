@@ -88,7 +88,7 @@ typedef struct {
                   uint8_t uart_lastTxByteIndex;
    volatile       uint8_t uartDone;
    volatile       uint8_t uartSendNow;
-   volatile       uint8_t uartToSend[6];
+   volatile       uint8_t uartToSend[10];
 
                   uint32_t       t1;
                   uint32_t       t2;
@@ -142,6 +142,9 @@ int sender_main(void){
 
     uint32_t tmp;
     uint16_t i;
+    
+    uint8_t sign;
+    uint8_t read;
 
     board_init();
     timer_init();
@@ -244,6 +247,22 @@ int sender_main(void){
                         app_vars.uartToSend[i++] = (uint8_t)((tmp >> 16) & 0x000000ff);
                         app_vars.uartToSend[i++] = (uint8_t)((tmp >> 8) & 0x000000ff);
                         app_vars.uartToSend[i++] = (uint8_t)((tmp >> 0) & 0x000000ff);
+
+                        sign = (app_vars.rxpk_rssi & 0x80) >> 7;
+                        if (sign){
+                            read = 0xff - (uint8_t)(app_vars.rxpk_rssi) + 1;
+                        } else {
+                            read = app_vars.rxpk_rssi;
+                        }
+
+                        if (sign) {
+                            app_vars.uartToSend[i++] = '-';
+                        } else {
+                            app_vars.uartToSend[i++] = '+';
+                        }
+                        app_vars.uartToSend[i++] = '0'+read/100;
+                        app_vars.uartToSend[i++] = '0'+read/10;
+                        app_vars.uartToSend[i++] = '0'+read%10;
 
                         app_vars.uartToSend[i++] = '\r';
                         app_vars.uartToSend[i++] = '\n';
@@ -442,7 +461,7 @@ void cb_startFrame(PORT_TIMER_WIDTH timestamp) {
 
 void cb_uart_tx_done(void) {
     app_vars.uart_lastTxByteIndex++;
-    if (app_vars.uart_lastTxByteIndex<6) {
+    if (app_vars.uart_lastTxByteIndex<10) {
         uart_writeByte(app_vars.uartToSend[app_vars.uart_lastTxByteIndex]);
     } else {
         app_vars.uartDone = 1;
