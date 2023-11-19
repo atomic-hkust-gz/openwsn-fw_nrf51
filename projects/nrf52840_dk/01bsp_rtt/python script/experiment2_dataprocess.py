@@ -42,22 +42,28 @@ for i in data_rssi_list:
 
 based_mean_time = data_time_mean_list[0]
 for i in range(len(data_time_mean_list)):
-    data_time_mean_list[i] = data_time_mean_list[i] - based_mean_time
+    data_time_mean_list[i] = (data_time_mean_list[i] - based_mean_time)/2
 
 
 
 
 fig = plt.figure()
-ax1 = fig.add_subplot(221)
+ax1 = fig.add_subplot(211)
 ax1.plot(distance_list,data_time_mean_list,c = 'r', label = 'mean time')
+ax1.set_xlabel('distance')
+ax1.set_ylabel('Round trip time')
 plt.legend()
-ax2 = fig.add_subplot(222)
-ax2.plot(distance_list,data_time_var_list,c = 'b', label = 'varance of time')
-plt.legend()
-ax3 = fig.add_subplot(223)
+#ax2 = fig.add_subplot(222)
+#ax2.plot(distance_list,data_time_var_list,c = 'b', label = 'varance of time')
+#ax2.set_xlabel('distance')
+#plt.legend()
+ax3 = fig.add_subplot(212)
 ax3.plot(distance_list,data_rssi_mean_list,c = 'r', label = 'mean rssi')
+ax3.set_xlabel('distance')
+ax3.set_ylabel('rssi')
 plt.legend()
-ax3 = fig.add_subplot(224)
-ax3.plot(distance_list,data_rssi_var_list,c = 'b', label = 'varance of rssi')
+#ax4 = fig.add_subplot(224)
+#ax4.plot(distance_list,data_rssi_var_list,c = 'b', label = 'varance of rssi')
+#ax4.set_xlabel('distance')
 plt.legend()
 plt.show()
