@@ -1,3 +1,9 @@
+'''
+author Manjiang Cao 
+e-mail <mcao999@connect.hkust-gz.edu.cn>
+this script using for draw the relationship between RTT estimate distance and true distance in the second wireless experiment.
+'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 import os

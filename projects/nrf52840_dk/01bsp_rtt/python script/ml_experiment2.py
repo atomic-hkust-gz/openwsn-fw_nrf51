@@ -1,3 +1,9 @@
+'''
+author Manjiang Cao 
+e-mail <mcao999@connect.hkust-gz.edu.cn>
+this script trying to using ML to predict the distance based on the second RTT wireless experiment
+'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -6,6 +12,10 @@ from scipy.linalg import svd
 from sklearn import linear_model
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import Ridge, Lasso
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
 
 def read_data(distance):
     f = open ('C:/Users/11422/Desktop/work_on_nrf52840/openwsn-fw/projects/nrf52840_dk/01bsp_rtt/experiment2/distance{}.txt'.format(distance), 'r')
@@ -43,6 +53,7 @@ def build_trainset_and_testset(train_data,test_data,n,p):
     train_x_time_var = []
     train_x_rssi_mean = []
     train_x_rssi_var = []
+    train_x_distance = []
 
     test_x_time_mean = []
     test_x_time_var = []
@@ -57,6 +68,7 @@ def build_trainset_and_testset(train_data,test_data,n,p):
             train_x_time_var.append(np.var(train_data[i,0,k:k+p]))
             train_x_rssi_mean.append(np.mean(train_data[i,1,k:k+p]))
             train_x_rssi_var.append(np.var(train_data[i,1,k:k+p]))
+            train_x_distance.append(i)
 
             train_y.append(i)
         
@@ -71,31 +83,13 @@ def build_trainset_and_testset(train_data,test_data,n,p):
 
         packet = [train_x,train_y,test_x,test_y,
                   train_x_time_mean,train_x_time_var,train_x_rssi_mean,train_x_rssi_var,
-                  test_x_time_mean,test_x_time_var,test_x_rssi_mean,test_x_rssi_var]
+                  test_x_time_mean,test_x_time_var,test_x_rssi_mean,test_x_rssi_var,train_x_distance]
     
     return packet
 
-def DMD(train_x):
-    X = train_x[:, :-1]  # 输入数据矩阵
-    Y = train_x[:, 1:]   # 输出数据矩阵
-
-    U, S, V = svd(X, full_matrices=False)  # 奇异值分解
-
-    Ur = U[:, :]     # 选择前 r 个奇异向量
-    Sr = np.diag(S[:])  # 选择前 r 个奇异值
-    Vr = V.conj().T[:, :]  # 选择前 r 个奇异向量的共轭转置
-
-    Atilde = Ur.conj().T @ Y @ Vr @ np.linalg.inv(Sr)  # 构建系统矩阵 Atilde
-
-    eigenvalues, W = np.linalg.eig(Atilde)  # 计算特征值和特征向量
-
-    Phi = Y @ Vr @ np.linalg.inv(Sr) @ W  # 构建 DMD 模态矩阵 Phi
-
-    return Phi, eigenvalues
-
-
 
 def main():
+    sample_times = 10
     distance_list = [i for i in range(16)]
     data_list = []
     train_data = []
@@ -108,7 +102,7 @@ def main():
     train_data = np.array(train_data)       #(16,2,1000)
     test_data = np.array(test_data)         #(16,2,1000)
 
-    packet = build_trainset_and_testset(train_data,test_data,5,500)
+    packet = build_trainset_and_testset(train_data,test_data,sample_times,500)
 
     train_x = np.array(packet[0])
     train_y = np.array(packet[1])
@@ -118,35 +112,23 @@ def main():
     train_x_time_var = np.array(packet[5])
     train_x_rssi_mean = np.array(packet[6])
     train_x_rssi_var = np.array(packet[7])
+    train_x_distance = np.array(packet[12])
 
     test_x_time_mean = np.array(packet[8])
     test_x_time_var = np.array(packet[9])
     test_x_rssi_mean = np.array(packet[10])
     test_x_rssi_var = np.array(packet[11])
-    '''
-    train_x_time_mean = np.array(train_x_time_mean)
-    train_x_time_var = np.array(train_x_time_var)
-    train_x_rssi_mean = np.array(train_x_rssi_mean)
-    train_x_rssi_var = np.array(train_x_rssi_var)
 
-    train_x = np.array(train_x)
-    train_y = np.array(train_y)
-    test_x = np.array(test_x)
-    test_y = np.array(test_y)
-    '''
-    train_PHi_list = []
-    train_eigenvalues_list = []
-    for i in range(len(train_x)):
-        PHi,eigenvalues = DMD(train_x[i])
-        train_PHi_list.append(PHi)
-        train_eigenvalues_list.append(eigenvalues)
+    train_true_time = []
+    for i in range(len(train_x_distance)):
+        train_true_time.append(float(train_x_distance[i])*2*16000000/299792458 + 20074.659)
 
-    train_PHi_array = np.array(train_PHi_list)
-    train_eigenvalues_array = np.array(train_eigenvalues_list)      #(80,2)         80 samples,each sample have 2 DMD features
-
+    train_true_time = np.array(train_true_time) 
+    print(train_true_time)
     train_merged_array = np.concatenate((train_x_time_mean[:, np.newaxis],train_x_time_var[:, np.newaxis],train_x_rssi_mean[:, np.newaxis],train_x_rssi_var[:, np.newaxis]), axis=1)
 
     X = train_merged_array
+    print(X.shape)
     Y = train_y
 
     lin_model = LinearRegression()
@@ -158,20 +140,11 @@ def main():
     lasso_model = Lasso()
     lasso_model.fit(X,Y)
 
-    test_PHi_list = []
-    test_eigenvalues_list = []
-    for i in range(len(test_x)):
-        PHi,eigenvalues = DMD(test_x[i])
-        test_PHi_list.append(PHi)
-        test_eigenvalues_list.append(eigenvalues)
-
-    test_PHi_array = np.array(test_PHi_list)
-    test_eigenvalues_array = np.array(test_eigenvalues_list)
-
     test_merged_array = np.concatenate((test_x_time_mean[:, np.newaxis],test_x_time_var[:, np.newaxis],test_x_rssi_mean[:, np.newaxis],test_x_rssi_var[:, np.newaxis]), axis=1)
 
     test_x = test_merged_array
 
+    '''
     lin_predictions = lin_model.predict(test_x)
     ridge_predictions = ridge_model.predict(test_x)
     lasso_predictions = lasso_model.predict(test_x)
@@ -179,6 +152,81 @@ def main():
 
     plt.figure()
     plt.scatter([i for i in range(len(test_x))],lasso_predictions, c = 'b',label = 'lasso_predictions')
+    plt.plot([i for i in range(len(test_x))],[i for i in range(len(test_x))],c = 'r',label = 'true value')
+    plt.legend()
+    plt.show()
+    '''
+    print(X.shape)
+    print(Y.shape)
+    X = torch.from_numpy(X).float()
+    print(X)
+    Y = torch.from_numpy(Y.reshape(16*sample_times,1)).float()
+
+    class RegressionNet(nn.Module):
+        def __init__(self, input_size, hidden_size, output_size):
+            super(RegressionNet, self).__init__()
+            self.fc1 = nn.Linear(input_size, hidden_size)
+            self.relu = nn.ReLU()
+            self.fc2 = nn.Linear(hidden_size, hidden_size)
+            self.relu = nn.ReLU()
+            self.fc3 = nn.Linear(hidden_size, hidden_size)
+            self.elu = nn.ELU()
+            self.fc4 = nn.Linear(hidden_size, hidden_size)
+            self.elu = nn.ELU()
+            self.fc5 = nn.Linear(hidden_size, output_size)
+
+
+        def forward(self, x): 
+            out = self.fc1(x)
+            out = self.relu(out)
+            out = self.fc2(out)
+            out = self.relu(out)
+            out = self.fc3(out)
+            out = self.elu(out)
+            out = self.fc4(out)
+            out = self.elu(out)
+            out = self.fc5(out)
+            return out
+        
+
+    # 定义模型的超参数
+    input_size = 4
+    hidden_size = 256
+    output_size = 1
+
+    # 创建模型实例
+    model = RegressionNet(input_size, hidden_size, output_size)
+
+    # 定义损失函数和优化器
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.0001)
+
+    # 进行模型训练
+    num_epochs = 10000
+    for epoch in range(num_epochs):
+        # 前向传播
+        outputs = model(X)
+        loss = criterion(outputs, Y)
+
+        # 反向传播和优化
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        # 打印训练过程中的损失
+        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+
+    # 在测试集上进行预测
+    test_x = torch.from_numpy(test_x).float()
+    with torch.no_grad():
+        predictions = model(test_x)
+
+    # 将预测结果转换为numpy数组
+    predictions = predictions.numpy()
+    print(predictions)
+
+    plt.figure()
+    plt.scatter([i for i in range(len(test_x))],predictions, c = 'b',label = 'ML_predictions')
     plt.plot([i for i in range(len(test_x))],[i for i in range(len(test_x))],c = 'r',label = 'true value')
     plt.legend()
     plt.show()

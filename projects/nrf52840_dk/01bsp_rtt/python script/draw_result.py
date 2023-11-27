@@ -1,3 +1,10 @@
+'''
+author Manjiang Cao 
+e-mail <mcao999@connect.hkust-gz.edu.cn>
+this script using for draw the relationship between average of RTT time and true distance in the first wireless experiment.
+'''
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 import os

@@ -1,3 +1,9 @@
+'''
+author Manjiang Cao 
+e-mail <mcao999@connect.hkust-gz.edu.cn>
+this script using for draw the relationship between RTT estimate distance and true distance in the wired experiment.
+'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -18,7 +24,7 @@ def read_data(distance):
     return time,rssi
 
 distance_list = [1,2,3,4,5,6,7,8,9,10,11]
-true_list = [1.1,2.1,3.1,4.1,5.1,6.1,7.1,8.1,9.1,10.1,11.1]
+true_list = [1.2,2.2,3.2,4.2,5.2,6.2,7.2,8.2,9.2,10.2,11.2]
 
 data_time_list = []
 data_rssi_list = []
@@ -33,9 +39,9 @@ for i in distance_list:
     data_rssi_list.append(rssi)
 
 for i in data_time_list:
-    #print(i)
-    data_time_mean_list.append(i.mean())
-    data_time_var_list.append(i.var())
+    #print(i[:500].shape)
+    data_time_mean_list.append(i[:200].mean())
+    data_time_var_list.append(i[:200].var())
 
 for i in data_rssi_list:
     data_rssi_mean_list.append(i.mean())
@@ -43,6 +49,9 @@ for i in data_rssi_list:
 
 based_mean_time = data_time_mean_list[0]
 for i in range(len(data_time_mean_list)):
+    #222222222 is the signal speed in the antenna extention cable. i.e. 4.5us/meter
+    #16000000 means the frequency of clock is 16MHz
+    #20074.659 is the average RTT time when the distance between two node is zero
     data_time_mean_list[i] = ((data_time_mean_list[i] - 20074.659)/2)/16000000*222222222
 
 
@@ -70,4 +79,21 @@ plt.legend()
 plt.legend()
 plt.show()
 
+data_time_list_float = [arr.astype(float) for arr in data_time_list]
+
+for arr in data_time_list_float:
+    arr -= 20074.659
+    print(arr)
+
+print(data_time_list_float)
+
+fig = plt.figure()
+plt.boxplot(data_time_list_float, showfliers=False, showmeans=True, meanline=True)
+x_labels = [ '1.2 meter', '2.2 meter', '3.2 meter', '4.2 meter',
+             '5.2 meter', '6.2 meter', '7.2 meter', '8.2 meter', 
+             '9.2 meter', '10.2 meter', '11.2 meter']
+plt.xticks(range(1,len(distance_list)+1), x_labels)
+
+
+plt.show()
 
