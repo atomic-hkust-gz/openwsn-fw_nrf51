@@ -18,6 +18,7 @@ def read_data(distance):
     return time,rssi
 
 distance_list = [1,2,3,4,5,6,7,8,9,10,11]
+true_list = [1.1,2.1,3.1,4.1,5.1,6.1,7.1,8.1,9.1,10.1,11.1]
 
 data_time_list = []
 data_rssi_list = []
@@ -42,23 +43,24 @@ for i in data_rssi_list:
 
 based_mean_time = data_time_mean_list[0]
 for i in range(len(data_time_mean_list)):
-    data_time_mean_list[i] = ((data_time_mean_list[i] - 20074.659)/2)/16000000*299792458
+    data_time_mean_list[i] = ((data_time_mean_list[i] - 20074.659)/2)/16000000*222222222
 
 
 
 
 fig = plt.figure()
 ax1 = fig.add_subplot(211)
-ax1.plot(distance_list,data_time_mean_list,c = 'r', label = 'mean time')
+ax1.plot(true_list,data_time_mean_list,c = 'r', label = 'mean',marker='o')
 ax1.set_xlabel('distance')
 ax1.set_ylabel('RTT distance')
+ax1.grid()
 plt.legend()
 #ax2 = fig.add_subplot(222)
 #ax2.plot(distance_list,data_time_var_list,c = 'b', label = 'varance of time')
 #ax2.set_xlabel('distance')
 #plt.legend()
 ax3 = fig.add_subplot(212)
-ax3.plot(distance_list,data_rssi_mean_list,c = 'r', label = 'mean rssi')
+ax3.plot(true_list,data_rssi_mean_list,c = 'r', label = 'mean rssi')
 ax3.set_xlabel('distance')
 ax3.set_ylabel('rssi')
 plt.legend()

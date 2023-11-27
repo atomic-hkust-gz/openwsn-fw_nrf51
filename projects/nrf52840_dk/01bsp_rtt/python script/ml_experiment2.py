@@ -144,13 +144,19 @@ def main():
     train_PHi_array = np.array(train_PHi_list)
     train_eigenvalues_array = np.array(train_eigenvalues_list)      #(80,2)         80 samples,each sample have 2 DMD features
 
-    train_merged_array = np.concatenate((train_eigenvalues_array,train_x_time_mean[:, np.newaxis],train_x_time_var[:, np.newaxis],train_x_rssi_mean[:, np.newaxis],train_x_rssi_var[:, np.newaxis]), axis=1)
+    train_merged_array = np.concatenate((train_x_time_mean[:, np.newaxis],train_x_time_var[:, np.newaxis],train_x_rssi_mean[:, np.newaxis],train_x_rssi_var[:, np.newaxis]), axis=1)
 
     X = train_merged_array
     Y = train_y
 
     lin_model = LinearRegression()
     lin_model.fit(X, Y)
+
+    ridge_model = Ridge()
+    ridge_model.fit(X,Y)
+
+    lasso_model = Lasso()
+    lasso_model.fit(X,Y)
 
     test_PHi_list = []
     test_eigenvalues_list = []
@@ -162,14 +168,17 @@ def main():
     test_PHi_array = np.array(test_PHi_list)
     test_eigenvalues_array = np.array(test_eigenvalues_list)
 
-    test_merged_array = np.concatenate((test_eigenvalues_array,test_x_time_mean[:, np.newaxis],test_x_time_var[:, np.newaxis],test_x_rssi_mean[:, np.newaxis],test_x_rssi_var[:, np.newaxis]), axis=1)
+    test_merged_array = np.concatenate((test_x_time_mean[:, np.newaxis],test_x_time_var[:, np.newaxis],test_x_rssi_mean[:, np.newaxis],test_x_rssi_var[:, np.newaxis]), axis=1)
 
     test_x = test_merged_array
 
     lin_predictions = lin_model.predict(test_x)
+    ridge_predictions = ridge_model.predict(test_x)
+    lasso_predictions = lasso_model.predict(test_x)
+
 
     plt.figure()
-    plt.scatter([i for i in range(len(test_x))],lin_predictions, c = 'b',label = 'lin_predictions')
+    plt.scatter([i for i in range(len(test_x))],lasso_predictions, c = 'b',label = 'lasso_predictions')
     plt.plot([i for i in range(len(test_x))],[i for i in range(len(test_x))],c = 'r',label = 'true value')
     plt.legend()
     plt.show()
