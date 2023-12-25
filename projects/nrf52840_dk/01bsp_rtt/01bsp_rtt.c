@@ -20,7 +20,8 @@
 
 #define NUM_PPI_CHANNEL_USED  4
 
-#define TIMER_PERIOD          (0xffff>>4)    ///< 0xffff = 2s@32kHz
+//#define TIMER_PERIOD          (0xffff>>4)    ///< 0xffff = 2s@32kHz
+#define TIMER_PERIOD          0xA4    /// 5ms
 
 #define SENDER_ID_LAST_BYTE   0xad            //board id ---707
 #define RECEIVER_ID_LAST_BYTE 0xac            //board id ---014
@@ -40,7 +41,8 @@
 
 //------- timer define -------
 #define TIMER_COMPARE_ID      0
-#define RESPONSE_DELAY        16000           // 16000@16MHz = 1ms
+#define RESPONSE_DELAY        
+           // 16000@16MHz = 1ms
 
 //------
 
@@ -214,7 +216,7 @@ int sender_main(void){
 
                         // led
                         leds_sync_on();
-                    break;
+                        break;
                 }
 
                 // clear flag
