@@ -41,7 +41,7 @@
 
 //------- timer define -------
 #define TIMER_COMPARE_ID      0
-#define RESPONSE_DELAY        
+#define RESPONSE_DELAY        16000
            // 16000@16MHz = 1ms
 
 //------

@@ -220,7 +220,7 @@ int sender_main(void){
 
     app_vars.uartDone = 1;
 
-    app_vars.receiver_id = 1; //start from first receiver
+    app_vars.receiver_id = 2; //start from first receiver
     
 
     radio_setStartFrameCb(cb_startFrame);
@@ -235,7 +235,7 @@ int sender_main(void){
     radio_rfOn();
 
     // freq type only effects on scum port, start from channel 14
-    radio_setFrequency(RECEIVER_ONE_CHANNEL, FREQ_RX);
+    radio_setFrequency(RECEIVER_TWO_CHANNEL, FREQ_RX);
     
     radio_rxEnable();
     
@@ -296,6 +296,7 @@ int sender_main(void){
                         app_vars.diff[app_vars.diff_index++&NUM_SAMPLE_MASK] = tmp;
                         
                         if (app_vars.packet[0] == app_vars.receiver_id){
+
                             uint8_t i = 0;
                             
                             app_vars.uartToSend[i++] = app_vars.receiver_id;
@@ -354,7 +355,7 @@ int sender_main(void){
                                 app_vars.receiver_id = 1;
                             }
                             radio_setFrequency(app_vars.receiver_id + 13, FREQ_RX);
-                            //break;
+                           
                         }
                         
                         break;
@@ -609,7 +610,7 @@ int receiver_two_main(void){
                         } else {
                             radio_txEnable();
                             radio_txNow();
-                            app_vars.state = APP_STATE_TX;
+                           app_vars.state = APP_STATE_TX;
                         }
                         break;
 
@@ -725,7 +726,7 @@ int receiver_three_main(void){
                             radio_txNow();
                             app_vars.state = APP_STATE_TX;
                         }
-                        break;
+                       break;
 
                     case APP_STATE_TX:
                         // done sending a packet
