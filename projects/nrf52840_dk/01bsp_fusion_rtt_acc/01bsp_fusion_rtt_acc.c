@@ -496,7 +496,7 @@ int receiver_one_main(void){
                         } else {
                             radio_txEnable();
                             radio_txNow();
-                            app_vars.state = APP_STATE_TX;
+                           app_vars.state = APP_STATE_TX;
                         }
                         break;
 

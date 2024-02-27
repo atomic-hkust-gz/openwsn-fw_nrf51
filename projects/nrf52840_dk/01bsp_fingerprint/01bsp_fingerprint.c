@@ -16,26 +16,32 @@
 #include "uart.h"
 #include "nrf52840.h"
 
+#include "bmx160.h"
+#include "i2c.h"
+#include "stdio.h"
 //=========================== defines =========================================
 
 #define NUM_PPI_CHANNEL_USED  4
 
 //#define TIMER_PERIOD          (0xffff>>4)    ///< 0xffff = 2s@32kHz
-#define TIMER_PERIOD          0xA4    /// 5ms
+#define TIMER_PERIOD          0xA4    ///< 0xffff = 2s@32kHz
 
-#define SENDER_ID_LAST_BYTE   0xad            //board id ---707
-#define RECEIVER_ID_LAST_BYTE 0xac            //board id ---014
-//#define RECEIVER_ID_LAST_BYTE 0x01            //board id ---376
-//#define RECEIVER_ID_LAST_BYTE 0x9e            //board id ---265
+#define SENDER_ID_LAST_BYTE         0xad            //board id ---707
+#define RECEIVER_ONE_ID_LAST_BYTE   0xac            //board id ---014
+#define RECEIVER_TWO_ID_LAST_BYTE   0x01            //board id ---376
+#define RECEIVER_THREE_ID_LAST_BYTE 0x9e          //board id ---265
+
+#define RECEIVER_NUM          3                   // the number of receiver
 
 #define EOF_CAPTURE_ID        0               //EOF_CAPTURE_ID using for EoF capture into EOF_CAPTURE_ID
 #define SOF_CAPTURE_ID        1               //SOF_CAPTURE_ID using for SoF capture into SOF_CAPTURE_ID
 
 //-------radio define-------
-#define CHANNEL               16
+#define RECEIVER_ONE_CHANNEL                  14    //channel = anchor number + 13
+#define RECEIVER_TWO_CHANNEL                  15
+#define RECEIVER_THREE_CHANNEL                16
 #define LENGTH_PACKET         20+LENGTH_CRC   //maximum length is 127 bytes
 #define LEN_PKT_TO_SEND       20+LENGTH_CRC
-
 
 //-------PPI define-------
 #define EOF_CAPTURE_PPI_ID                   0  //EOF_CAPTURE_PPI_ID using for Radio EoF -> Timer Capture  app_vars.t1 into EOF_CAPTURE_ID
@@ -44,8 +50,7 @@
 
 //------- timer define -------
 #define TIMER_COMPARE_ID      0
-#define RESPONSE_DELAY        16000
-           // 16000@16MHz = 1ms
+#define RESPONSE_DELAY        16000           // 16000@16MHz = 1ms
 
 //------
 
@@ -81,6 +86,7 @@ typedef struct {
     uint8_t              txpk_buf[LENGTH_PACKET];
     uint8_t              txpk_len;
     //uint8_t              stringtosend[6];
+    uint8_t              receiver_id;
 
     uint8_t              packet[LENGTH_PACKET];
     uint8_t              packet_len;
@@ -108,7 +114,7 @@ app_vars_t app_vars;
 //=========================== prototypes ======================================
 
 int sender_main(void);
-int receiver_main(void);
+int receiver_main(uint8_t);
 
 void cb_endFrame(PORT_TIMER_WIDTH timestamp);
 void cb_startFrame(PORT_TIMER_WIDTH timestamp);
@@ -129,14 +135,17 @@ void delay_ms(int16_t times);
 int mote_main(void) {
     uint8_t board_eui[8];
     eui64_get(board_eui);
-
+    
+    uint8_t anchor_number;
+    anchor_number = 1;
     while(1) {
 
         if (board_eui[7] == SENDER_ID_LAST_BYTE){
             sender_main();
-        } else if (board_eui[7] == RECEIVER_ID_LAST_BYTE){
-             receiver_main();
-        }   
+        //when downloading, change the receiver last byte
+        } else if (board_eui[7] == RECEIVER_ONE_ID_LAST_BYTE){
+            receiver_main(anchor_number);
+        }
     }  
 }
 
@@ -150,6 +159,8 @@ int sender_main(void){
     
     uint8_t sign;
     uint8_t read;
+    
+    uint8_t receiver_id;
 
     board_init();
     timer_init();
@@ -172,6 +183,8 @@ int sender_main(void){
     uart_enableInterrupts();
 
     app_vars.uartDone = 1;
+
+    app_vars.receiver_id = 1; //start from first receiver
     
 
     radio_setStartFrameCb(cb_startFrame);
@@ -185,8 +198,8 @@ int sender_main(void){
     // prepare radio
     radio_rfOn();
 
-    // freq type only effects on scum port
-    radio_setFrequency(CHANNEL, FREQ_RX);
+    // freq type only effects on scum port, start from channel 14
+    radio_setFrequency(RECEIVER_ONE_CHANNEL, FREQ_RX);
     
     radio_rxEnable();
     
@@ -219,7 +232,7 @@ int sender_main(void){
 
                         // led
                         leds_sync_on();
-                        break;
+                    break;
                 }
 
                 // clear flag
@@ -245,43 +258,61 @@ int sender_main(void){
 
                         tmp = app_vars.t2 - app_vars.t1;
                         app_vars.diff[app_vars.diff_index++&NUM_SAMPLE_MASK] = tmp;
+                        
+                        if (app_vars.packet[0] == app_vars.receiver_id){
 
-                        uint8_t i = 0;
+                            uint8_t i = 0;
+                            
+                            app_vars.uartToSend[i++] = app_vars.receiver_id;
+                            //send rtt time 
+                            app_vars.uartToSend[i++] = (uint8_t)((tmp >> 24) & 0x000000ff);
+                            app_vars.uartToSend[i++] = (uint8_t)((tmp >> 16) & 0x000000ff);
+                            app_vars.uartToSend[i++] = (uint8_t)((tmp >> 8) & 0x000000ff);
+                            app_vars.uartToSend[i++] = (uint8_t)((tmp >> 0) & 0x000000ff);
+                            //send RSSI for response packet
+                            sign = (app_vars.rxpk_rssi & 0x80) >> 7;
+                            if (sign){
+                                read = 0xff - (uint8_t)(app_vars.rxpk_rssi) + 1;
+                            } else {
+                                read = app_vars.rxpk_rssi;
+                            }
 
-                        app_vars.uartToSend[i++] = (uint8_t)((tmp >> 24) & 0x000000ff);
-                        app_vars.uartToSend[i++] = (uint8_t)((tmp >> 16) & 0x000000ff);
-                        app_vars.uartToSend[i++] = (uint8_t)((tmp >> 8) & 0x000000ff);
-                        app_vars.uartToSend[i++] = (uint8_t)((tmp >> 0) & 0x000000ff);
+                            if (sign) {
+                                app_vars.uartToSend[i++] = '-';
+                            } else {
+                                app_vars.uartToSend[i++] = '+';
+                            }
+                            app_vars.uartToSend[i++] = '0'+read/100;
+                            app_vars.uartToSend[i++] = '0'+read/10;
+                            app_vars.uartToSend[i++] = '0'+read%10;
+                            //get RSSI of request packet from response packet and send 
+                            app_vars.uartToSend[i++] = app_vars.packet[1];
+                            app_vars.uartToSend[i++] = app_vars.packet[2];
+                            app_vars.uartToSend[i++] = app_vars.packet[3];
+                            app_vars.uartToSend[i++] = app_vars.packet[4];
 
-                        sign = (app_vars.rxpk_rssi & 0x80) >> 7;
-                        if (sign){
-                            read = 0xff - (uint8_t)(app_vars.rxpk_rssi) + 1;
-                        } else {
-                            read = app_vars.rxpk_rssi;
+                            app_vars.uartToSend[i++] = '\r';
+                            app_vars.uartToSend[i++] = '\n';
+
+                            //uart_writeByte(app_vars.uartToSend[6]);
+
+                            // send string over UART
+                            if (app_vars.uartDone == 1) {
+                                app_vars.uartDone              = 0;
+                                app_vars.uart_lastTxByteIndex  = 0;
+                                uart_writeByte(app_vars.uartToSend[app_vars.uart_lastTxByteIndex]);
+                            }
+
+                            leds_error_off();
+
+                            app_vars.receiver_id = app_vars.receiver_id + 1;
+                            if (app_vars.receiver_id > RECEIVER_NUM){
+                                app_vars.receiver_id = 1;
+                            }
+                            radio_setFrequency(app_vars.receiver_id + 13, FREQ_RX);
+                           
                         }
-
-                        if (sign) {
-                            app_vars.uartToSend[i++] = '-';
-                        } else {
-                            app_vars.uartToSend[i++] = '+';
-                        }
-                        app_vars.uartToSend[i++] = '0'+read/100;
-                        app_vars.uartToSend[i++] = '0'+read/10;
-                        app_vars.uartToSend[i++] = '0'+read%10;
-
-                        app_vars.uartToSend[i++] = '\r';
-                        app_vars.uartToSend[i++] = '\n';
-
-                        //uart_writeByte(app_vars.uartToSend[6]);
-
-                        // send string over UART
-                        if (app_vars.uartDone == 1) {
-                            app_vars.uartDone              = 0;
-                            app_vars.uart_lastTxByteIndex  = 0;
-                            uart_writeByte(app_vars.uartToSend[app_vars.uart_lastTxByteIndex]);
-                        }
-
-                        leds_error_off();
+                        
                         break;
                     
                     case APP_STATE_TX:
@@ -312,14 +343,13 @@ int sender_main(void){
                     radio_rfOff();
 
                     // prepare packet
-                    app_vars.txpk_buf[0] = 1; // Packet number or other data
+                    app_vars.txpk_buf[0] = app_vars.receiver_id; // Packet number or other data
                     app_vars.txpk_len = sizeof(app_vars.txpk_buf);
 
                     // send packet
                     radio_loadPacket(app_vars.txpk_buf, app_vars.txpk_len);
                     radio_txEnable();
                     radio_txNow();
-
                     app_vars.state = APP_STATE_TX;
                 }
 
@@ -330,9 +360,12 @@ int sender_main(void){
 }
 
 
-int receiver_main(void){
+int receiver_main(uint8_t anchor_number){
     board_init();
     timer_init();
+
+    uint8_t sign;
+    uint8_t read;
     
     //config PPI
 
@@ -349,10 +382,10 @@ int receiver_main(void){
     // prepare radio
     radio_rfOn();
     // freq type only effects on scum port
-    radio_setFrequency(CHANNEL, FREQ_RX);
+    radio_setFrequency(anchor_number+13, FREQ_RX);
 
     // prepare packet
-    app_vars.txpk_buf[0] = 2; // Packet number or other data
+    app_vars.txpk_buf[0] = anchor_number; // Packet number or other data
     app_vars.txpk_len = sizeof(app_vars.txpk_buf);
 
     radio_setStartFrameCb(cb_startFrame);
@@ -408,15 +441,43 @@ int receiver_main(void){
                                     &app_vars.rxpk_crc
                                 );
                         
-                        timer_schedule(TIMER_COMPARE_ID, timer_getCapturedValue(EOF_CAPTURE_ID)+RESPONSE_DELAY);                        
+                        if (app_vars.packet[0] == app_vars.txpk_buf[0]){
+                            timer_schedule(TIMER_COMPARE_ID, timer_getCapturedValue(EOF_CAPTURE_ID)+RESPONSE_DELAY);                        
+                            
+                            sign = (app_vars.rxpk_rssi & 0x80) >> 7;
+                            if (sign){
+                                read = 0xff - (uint8_t)(app_vars.rxpk_rssi) + 1;
+                            } else {
+                                read = app_vars.rxpk_rssi;
+                            }
+                            // the first byte of txpk_buf used to tell target that which anchor is responsing
 
-                        radio_loadPacket(app_vars.txpk_buf, app_vars.txpk_len);
-                        radio_txEnable();
+                            
+                            uint8_t i = 1;
+                            if (sign) {
+                                app_vars.txpk_buf[i++] = '-';
+                            } else {
+                                app_vars.txpk_buf[i++] = '+';
+                            }
+                            app_vars.txpk_buf[i++] = '0'+read/100;
+                            app_vars.txpk_buf[i++] = '0'+read/10;
+                            app_vars.txpk_buf[i++] = '0'+read%10;
+                            
+                            
+                            app_vars.txpk_len = sizeof(app_vars.txpk_buf);
+
+                            radio_loadPacket(app_vars.txpk_buf, app_vars.txpk_len);
+                            radio_txEnable();
                         
-                        app_vars.state = APP_STATE_TX;
-                        // led
-                        leds_error_off();
-                        //memset(&app_vars.packet,0,sizeof(app_vars.packet));
+                            app_vars.state = APP_STATE_TX;
+                            // led
+                            leds_error_off();
+                            //memset(&app_vars.packet,0,sizeof(app_vars.packet));
+                        } else {
+                            radio_txEnable();
+                            radio_txNow();
+                           app_vars.state = APP_STATE_TX;
+                        }
                         break;
 
                     case APP_STATE_TX:
@@ -466,7 +527,7 @@ void cb_startFrame(PORT_TIMER_WIDTH timestamp) {
 
 void cb_uart_tx_done(void) {
     app_vars.uart_lastTxByteIndex++;
-    if (app_vars.uart_lastTxByteIndex<10) {
+    if (app_vars.uart_lastTxByteIndex<15) {
         uart_writeByte(app_vars.uartToSend[app_vars.uart_lastTxByteIndex]);
     } else {
         app_vars.uartDone = 1;
