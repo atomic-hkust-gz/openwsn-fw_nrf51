@@ -23,8 +23,8 @@ remainder of the packet contains an incrementing bytes.
 
 #define LENGTH_BLE_CRC  3
 #define LENGTH_PACKET   5+LENGTH_BLE_CRC
-#define CHANNEL         0            // 24ghz: 11 = 2.405GHz, subghz: 11 = 865.325 in  FSK operating mode #1
-#define TIMER_PERIOD    (32768>>0)    // (32768>>1) = 500ms @ 32kHz
+#define CHANNEL         11            // 24ghz: 11 = 2.405GHz, subghz: 11 = 865.325 in  FSK operating mode #1
+#define TIMER_PERIOD    (32768>>4)    // (32768>>1) = 500ms @ 32kHz
 #define ENABLE_DF       1
 
 //=========================== variables =======================================
@@ -85,6 +85,9 @@ int mote_main(void) {
     // start periodic overflow
     sctimer_setCompare(sctimer_readCounter()+ TIMER_PERIOD);
     sctimer_enable();
+
+    //radio_txEnable();
+
     while(1) {
 
         // wait for timer to elapse
@@ -100,11 +103,10 @@ int mote_main(void) {
         // prepare packet
         app_vars.txpk_num++;
         app_vars.txpk_len           = sizeof(app_vars.txpk_buf);
-        app_vars.txpk_buf[0]        = 0x20;
-        app_vars.txpk_buf[1]        = 0x03;
-        app_vars.txpk_buf[2]        = 0x00;
-        app_vars.txpk_buf[3]        = 0x00;
-        app_vars.txpk_buf[4]        = 0x00;
+        app_vars.txpk_buf[0]        = app_vars.txpk_num;
+        for (i=1;i<app_vars.txpk_len;i++) {
+            app_vars.txpk_buf[i] = i;
+        }
 
         // send packet
         radio_loadPacket(app_vars.txpk_buf,app_vars.txpk_len);

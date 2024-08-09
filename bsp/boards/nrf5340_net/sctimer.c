@@ -49,12 +49,13 @@ void sctimer_init(void){
     // stop LFCLK
     NRF_CLOCK_NS->TASKS_LFCLKSTOP     = 1;
     while (
-      (NRF_CLOCK_NS->LFCLKSTAT & LFCLK_STATE_RUNNING_MASK)
+      (NRF_CLOCK_NS->LFCLKSTAT & LFCLK_STATE_RUNNING_MASK) == 1
     );
 
 
     // configure the source
-    NRF_CLOCK_NS->LFCLKSRC = (uint32_t)LFCLK_SRC_XTAL;
+    //NRF_CLOCK_NS->LFCLKSRC = (uint32_t)LFCLK_SRC_XTAL;
+    NRF_CLOCK_NS->LFCLKSRC = (uint32_t)LFCLK_SRC_RC;
 
     // start LFCLK
     NRF_CLOCK_NS->TASKS_LFCLKSTART = (uint32_t)1;
@@ -63,7 +64,7 @@ void sctimer_init(void){
     );
     
     // stop RTC timer
-    NRF_RTC0_NS->TASKS_STOP = (uint32_t)1;
+    NRF_RTC0_NS->TASKS_STOP = (uint32_t)1; 
 
     // configure compare timer interrupt
     NRF_RTC0_NS->EVTEN = 

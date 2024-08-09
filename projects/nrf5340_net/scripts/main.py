@@ -19,7 +19,7 @@ def degree_range(n):
     end = np.linspace(0, 360, n+1, endpoint=True)[1::]
     mid_points = start + ((end-start)/2.)
     return np.c_[start, end], mid_points
-
+sample_file
 
 def rot_text(ang):
     rotation = np.degrees(np.radians(ang) * np.pi / np.pi - np.radians(90))
@@ -149,8 +149,8 @@ def animate(i, data_source, on_board_calculation):
         
 if __name__ == '__main__':
 
-    data_source             = raw_input("Replay from file (r) or real-time from serial (s)?")
-    on_board_calculation    = raw_input("on board angle calculation ? (y/n)")
+    data_source             = input("Replay from file (r) or real-time from serial (s)?")
+    on_board_calculation    = input("on board angle calculation ? (y/n)")
     
     if on_board_calculation == 'n':
         on_board_calculation = False
@@ -159,7 +159,7 @@ if __name__ == '__main__':
     
     if data_source == 's':
         
-        print "start serial reading..."
+        print ("start serial reading...")
         serial_thread = Thread( target = start_read)
         serial_thread.start()
     

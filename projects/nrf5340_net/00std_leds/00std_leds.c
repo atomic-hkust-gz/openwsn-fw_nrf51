@@ -44,14 +44,14 @@ int main(void) {
 
     while (1) {
 
-        output_status = ((uint32_t)(1 << LED_ERROR)) & (NRF_P0_NS->OUT);
+        output_status = ((uint32_t)(1 << LED_RADIO)) & (NRF_P0_NS->OUT);
 
         if (output_status==0) {
             // it is on , turn off led
-            NRF_P0_NS->OUTSET =  1 << LED_ERROR;
+            NRF_P0_NS->OUTSET =  1 << LED_RADIO;
         } else {
             // it is off, turn on led
-            NRF_P0_NS->OUTCLR =  1 << LED_ERROR;
+            NRF_P0_NS->OUTCLR =  1 << LED_RADIO;
         }
 
         for (delay=0;delay<0xfffff;delay++);

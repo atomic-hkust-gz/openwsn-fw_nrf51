@@ -21,7 +21,7 @@ num_sample_in_reference     = 64
 switching_space             = 2
 t_unit                      = 0.125 # micro-seconds
 
-nrf5340_port                = 'COM9'
+nrf5340_port                = 'COM18'
 sample_file                 = 'samples.txt'
 
 new_read_mark       = 255
@@ -31,4 +31,4 @@ DEBUG_ON                    = 0
 
 def debug_print(str, var1 = None, var2 = None, var3 = None):
     if DEBUG_ON:
-        print "{0} var1={1} var2={2} var3={3}".format(str, var1, var2, var3)
+        print ("{0} var1={1} var2={2} var3={3}".format(str, var1, var2, var3))

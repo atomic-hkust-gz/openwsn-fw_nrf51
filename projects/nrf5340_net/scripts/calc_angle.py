@@ -36,9 +36,12 @@ def aoa_angle_calculation(phase_data, num_pkt, array):
     # ==== generate phase data for ANT used reference at each sampling point
     
     phase_data_ant2 = phase_data[:index_2]
+
     
     # ---- ref: section 3.2 First IQ sample in nwp_036.pdf (Direction Finding nWP-036)
     
+    #NUM_SAMPLES 160
+    #num_sample_per_slot 8
     while len(phase_data_ant2) < NUM_SAMPLES + num_sample_per_slot: 
         new_phase = phase_data_ant2[-1] + step
         if new_phase > 201:
@@ -57,6 +60,19 @@ def aoa_angle_calculation(phase_data, num_pkt, array):
         phase_ant_x_data = phase_data[8*i:8*(i+1)]      + phase_data[8*(i+4):8*(i+5)]           + phase_data[8*(i+8):8*(i+9)]
         phase_ant_2_data = phase_data_ant2[8*i:8*(i+1)] + phase_data_ant2[8*(i+4):8*(i+5)]    + phase_data_ant2[8*(i+8):8*(i+9)]
         
+        plt.figure()
+        plt.plot([j*0.125 for j in range(8*i,8*(i+1))], phase_data[8*i:8*(i+1)], c='r', label='array_{}_ant1/3'.format(array))
+        plt.plot([j*0.125 for j in range(8*i,8*(i+1))], phase_data_ant2[8*i:8*(i+1)], c='b', label='array_{}_ant2'.format(array))
+
+        plt.plot([j*0.125 for j in range(8*(i+4),8*(i+5))], phase_data[8*(i+4):8*(i+5)], c='r')
+        plt.plot([j*0.125 for j in range(8*(i+4),8*(i+5))], phase_data_ant2[8*(i+4):8*(i+5)], c='b')
+
+        plt.plot([j*0.125 for j in range(8*(i+8),8*(i+9))], phase_data[8*(i+8):8*(i+9)], c='r')
+        plt.plot([j*0.125 for j in range(8*(i+8),8*(i+9))], phase_data_ant2[8*(i+8):8*(i+9)], c='b')
+        plt.title('array_{}'.format(array))
+        plt.legend()
+        plt.savefig('phase_differnet_{}.png'.format(shift))
+
         phase_diff_ant_2_x = []
         for index in range(len(phase_ant_x_data)):
         
@@ -113,7 +129,7 @@ def aoa_angle_calculation(phase_data, num_pkt, array):
         return theta
         
     if avg_phase_diff_ant_2_1 != None:
-        theta_1 = calculate_angle(avg_phase_diff_ant_2_1)
+        theta_1 = (avg_phase_diff_ant_2_1)
         
     if avg_phase_diff_ant_3_2 != None:
         theta_2 = calculate_angle(avg_phase_diff_ant_3_2)
@@ -142,3 +158,58 @@ def aoa_angle_calculation(phase_data, num_pkt, array):
     debug_print("off-board angle  = {0}".format(angle), theta_1, theta_2)
     return phase_data_ant2, angle
     
+
+def manjiang_MUSIC_aoa_angle_calculation(phase_data, num_pkt, array):
+ # find first two adjencent time point when phase wrapped
+    
+    debug_print("phase_data :",var1=phase_data)
+    
+    # 64 
+    index_1 = 0
+    index_2 = 0
+    for index in range(num_sample_in_reference-1):
+        # phase varies from -201 to 200 (-180 to 180 degree)
+        if phase_data[index] - phase_data[index+1] > 300:
+            if  index_1 == 0:
+                index_1 = index+1
+            else:
+                index_2 = index+1
+                break
+    
+    if index_1 != 0 and index_2 != 0 and index_2 - index_1 > 15 and index_2 - index_1 < 49:
+        
+        IF = 1 / ((index_2 - index_1) * t_unit * 1e-6)
+        freq = CENTER_FREQ + IF
+        
+        wave_length = (1.0/freq) * C  # in meters
+        reference_phase_data = phase_data[index_1:index_2]
+        step = (phase_data[index_2-1] - phase_data[index_1])/(index_2-index_1-1)
+        
+        debug_print("step={0}".format(step))
+    else:
+        return None, None
+    
+    # ==== generate phase data for ANT used reference at each sampling point
+    
+    phase_data_ant2 = phase_data[:index_2]
+
+    
+    # ---- ref: section 3.2 First IQ sample in nwp_036.pdf (Direction Finding nWP-036)
+    
+    #NUM_SAMPLES 160
+    #num_sample_per_slot 8
+    while len(phase_data_ant2) < NUM_SAMPLES + num_sample_per_slot: 
+        new_phase = phase_data_ant2[-1] + step
+        if new_phase > 201:
+            new_phase -= 403
+        phase_data_ant2.append(new_phase)
+    phase_data_ant2 = phase_data_ant2[:64] + phase_data_ant2[64+8:160+8]
+
+    def generate_ant_phase(shift,phase_data):
+        i = 8 + shift
+        ant_phase =  phase_data[8*i:8*(i+1)]      + phase_data[8*(i+4):8*(i+5)]           + phase_data[8*(i+8):8*(i+9)]
+        return ant_phase
+    
+    ant_1 = generate_ant_phase(0,phase_data)
+    ant_2 = generate_ant_phase(0,)
+    return 

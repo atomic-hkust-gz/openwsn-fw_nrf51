@@ -34,8 +34,11 @@ end of frame event), it will turn on its error LED.
 
 #define NUM_SAMPLES     SAMPLE_MAXCNT
 #define LEN_UART_BUFFER ((NUM_SAMPLES*4)+8)
+#define LENGTH_SERIAL_FRAME  127              // length of the serial frame
 
 #define ENABLE_DF       1
+
+uint16_t length = 0;
 
 const static uint8_t ble_device_addr[6] = { 
     0xaa, 0xbb, 0xcc, 0xcc, 0xbb, 0xaa
@@ -82,6 +85,8 @@ typedef struct {
                 uint8_t         uart_buffer_to_send[LEN_UART_BUFFER];
                 uint16_t        uart_lastTxByteIndex;
      volatile   uint8_t         uartDone;
+
+                uint8_t         uart_txFrame[LENGTH_SERIAL_FRAME];
 } app_vars_t;
 
 app_vars_t app_vars;
@@ -94,6 +99,8 @@ void     cb_timer(void);
 
 void     cb_uartTxDone(void);
 uint8_t  cb_uartRxCb(void);
+void     send_string(const char* str);
+
 
 void     assemble_ibeacon_packet(void);
 
@@ -108,6 +115,8 @@ int mote_main(void) {
     uint8_t freq_offset;
     uint8_t sign;
     uint8_t read;
+    
+    uint8_t current_time;
 
     // clear local variables
     memset(&app_vars,0,sizeof(app_vars_t));
@@ -194,6 +203,7 @@ int mote_main(void) {
 
                         // done receiving a packet
                         app_vars.packet_len = sizeof(app_vars.packet);
+                
 
                         // get packet from radio
                         radio_getReceivedFrame(
@@ -204,6 +214,7 @@ int mote_main(void) {
                             &app_vars.rxpk_lqi,
                             &app_vars.rxpk_crc
                         );
+                        //send_string("PACK: ");
                         if (app_vars.rxpk_crc && ENABLE_DF) {
                             
                             app_vars.num_samples = radio_get_df_samples(app_vars.sample_buffer,NUM_SAMPLES);
@@ -217,27 +228,45 @@ int mote_main(void) {
                             }
 
                             // recoard rssi
-                            app_vars.uart_buffer_to_send[4*i+0]     = app_vars.rxpk_rssi;
+
+                            sign = (app_vars.rxpk_rssi & 0x80) >> 7;
+                                if (sign){
+                                    read = 0xff - (uint8_t)(app_vars.rxpk_rssi) + 1;
+                                } else {
+                                    read = app_vars.rxpk_rssi;
+                                }
+
+                                if (sign) {
+                                    app_vars.uart_buffer_to_send[4*i+0] = '-';
+                                } else {
+                                    app_vars.uart_buffer_to_send[4*i+0] = '+';
+                                }
+                            app_vars.uart_buffer_to_send[4*i+1] = '0'+read/100;
+                            app_vars.uart_buffer_to_send[4*i+2] = '0'+read/10;
+                            app_vars.uart_buffer_to_send[4*i+3] = '0'+read%10;
+
+                            //app_vars.uart_buffer_to_send[4*i+0]     = app_vars.rxpk_rssi;
                             // record scum settings for transmitting
-                            app_vars.uart_buffer_to_send[4*i+1]     = app_vars.packet[3];
-                            app_vars.uart_buffer_to_send[4*i+2]     = app_vars.packet[4];
-                            app_vars.uart_buffer_to_send[4*i+3]     = app_vars.packet[5];
+                            //app_vars.uart_buffer_to_send[4*i+1]     = app_vars.packet[3];
+                            //app_vars.uart_buffer_to_send[4*i+2]     = app_vars.packet[4];
+                            //app_vars.uart_buffer_to_send[4*i+3]     = app_vars.packet[5];
                             // frame split identifier
                             app_vars.uart_buffer_to_send[4*i+4]     = 0xff;
                             app_vars.uart_buffer_to_send[4*i+5]     = 0xff;
                             app_vars.uart_buffer_to_send[4*i+6]     = 0xff;
                             app_vars.uart_buffer_to_send[4*i+7]     = 0xff;
-
+  
                             app_vars.uart_lastTxByteIndex = 0;
                             uart_writeByte(app_vars.uart_buffer_to_send[0]);
+
                         }
 
                         // led
                         leds_error_off();
           
                         // continue to listen
-                        radio_rxEnable();
-                        radio_rxNow();
+                        //radio_rxEnable();
+                        //radio_rxNow();
                         break;
                     case APP_STATE_TX:
                         // done sending a packet
@@ -326,6 +355,7 @@ void cb_startFrame(PORT_TIMER_WIDTH timestamp) {
     // set flag
     app_vars.flags |= APP_FLAG_START_FRAME;
 
+
     // update debug stats
     app_dbg.num_startFrame++;
 }
@@ -368,4 +398,15 @@ uint8_t cb_uartRxCb(void) {
    uart_writeByte(byte);
    
    return 0;
+}
+
+void send_string(const char* str)
+{
+    strcpy(app_vars.uart_txFrame, str);
+    for (uint16_t i = length; i < sizeof(app_vars.uart_txFrame); i++)
+    app_vars.uart_txFrame[i] = 0;
+    app_vars.uartDone = 0;
+    app_vars.uart_lastTxByteIndex = 0;
+    uart_writeByte(app_vars.uart_txFrame[app_vars.uart_lastTxByteIndex]);
+    while(app_vars.uartDone==0);
 }
