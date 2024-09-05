@@ -14,10 +14,10 @@ This file is driver of using CHW antenna board for AoA/AoD
 //=========================== define ==========================================
 
 
-#define SAMPLE_MAXCNT       (0xA0)
-#define MAX_IQSAMPLES            ((1<<8)-1)
+#define SAMPLE_MAXCNT       (0x240)
+#define MAX_IQSAMPLES            0x240 //((1<<8)-1)
 
-#define MAX_PACKET_SIZE           (255)       ///< maximal size of radio packet (one more byte at the beginning needed to store the length)
+#define MAX_PACKET_SIZE           (256)       ///< maximal size of radio packet (one more byte at the beginning needed to store the length)
 
 // CHW antenna pin mapping
 
@@ -50,8 +50,9 @@ This file is driver of using CHW antenna board for AoA/AoD
 #define ANT_SWITCH_PIN2           8 // Pin7
 #define ANT_SWITCH_PIN3           9 // Pin8
 
-#define ANT_ENABLE_PIN            1
-#define ANT_DIGITAL_CONTROL_INPUT_PIN   4
+#define ANT_DIGITAL_CONTROL_INPUT_PIN   1   //Pin9
+#define ANT_ENABLE_PIN            4         //Pin10
+
 
 #define PATTERN_A3_2              0x0
 #define PATTERN_A3_1              0x1
@@ -86,7 +87,7 @@ void antenna_CHW_switch_init(void) {
     nrf_gpio_cfg_output(ANT_SWITCH_PORT, ANT_DIGITAL_CONTROL_INPUT_PIN);
 
     NRF_P1_NS->OUTSET =  1 << ANT_ENABLE_PIN;
-    NRF_P1_NS->OUTSET =  1 << ANT_DIGITAL_CONTROL_INPUT_PIN;
+    NRF_P1_NS->OUTCLR =  1 << ANT_DIGITAL_CONTROL_INPUT_PIN;
 
 }
 
@@ -167,8 +168,30 @@ void radio_configure_direction_finding_CHW_antenna_switch(void) {
     // set radio switch pattern
     NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A1_1);
     NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A1_1);
+
+    NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A1_1);
     NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A1_2);
     NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A1_3);
+    //NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A1_4);
+
+    NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A4_2);
+    NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A4_3);
+    NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A4_4);
+
+    NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A2_1);
+    NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A3_1);
+    NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A4_1);
+
     NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A1_4);
+    NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A2_4);
+    NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A3_4);
+
+    NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A2_2);
+    NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A2_3);
+    NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A3_2);
+    NRF_RADIO_NS->SWITCHPATTERN = (uint32_t)(PATTERN_A3_3);
+
+  
+
 }
 

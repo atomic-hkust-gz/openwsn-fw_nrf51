@@ -11,7 +11,7 @@ This file is driver of using CHW antenna board for AoA/AoD
 
 // set this value according to the direction finding configurations
 // e.g. if 
-#define SAMPLE_MAXCNT       (0xA0)
+#define SAMPLE_MAXCNT       (0x240)
 
 //=========================== typedef =========================================
 

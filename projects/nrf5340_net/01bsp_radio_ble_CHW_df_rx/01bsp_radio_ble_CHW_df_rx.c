@@ -14,7 +14,8 @@ Every TIMER_PERIOD, it will also send a packet containing LENGTH_PACKET bytes
 set to ID. While sending a packet (i.e. from the start of frame event to the
 end of frame event), it will turn on its error LED.
 
-This program is edited from 01bsp_radio_ble_rx. This program implement a ble rx side.
+This program is edited from 01bsp_radio_ble_rx. This program implement a ble 
+direction finding with coreHW antenna board
 
 \author Tengfei Chang <tengfei.chang@inria.fr>, August 2020.
 \author Manjiang Cao <mcao999@connect.hkust-gz.edu.cn>, June 2024.
@@ -38,7 +39,7 @@ This program is edited from 01bsp_radio_ble_rx. This program implement a ble rx 
 
 #define NUM_SAMPLES     SAMPLE_MAXCNT
 #define LEN_UART_BUFFER ((NUM_SAMPLES*4)+8)
-#define LENGTH_SERIAL_FRAME  127              // length of the serial frame
+#define LENGTH_SERIAL_FRAME  127            // length of the serial frame
 
 #define ENABLE_DF       1
 

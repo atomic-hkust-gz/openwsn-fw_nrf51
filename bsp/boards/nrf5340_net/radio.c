@@ -26,7 +26,7 @@
 #define STATE_TX                    11
 #define STATE_TXDIABLE              12
 
-#define MAX_PACKET_SIZE           (255)       ///< maximal size of radio packet (one more byte at the beginning needed to store the length)
+#define MAX_PACKET_SIZE           (256)       ///< maximal size of radio packet (one more byte at the beginning needed to store the length)
 #define CRC_POLYNOMIAL            (0x11021)   ///< polynomial used for CRC calculation in 802.15.4 frames (x^16 + x^12 + x^5 + 1)
 
 #define WAIT_FOR_RADIO_DISABLE    (0)         ///< whether the driver shall wait until the radio is disabled upon calling radio_rfOff()
@@ -42,7 +42,7 @@
 #define RADIO_TXPOWER             0 // in 2-compilant format
 
 // the maxmium should be ((1<<14)-1), but need larger .bss size
-#define MAX_IQSAMPLES            ((1<<8)-1)
+#define MAX_IQSAMPLES            0x240 //used to be ((1<<8)-1) 0x140 == 320 0x440 = 1088
 
 //=========================== variables =======================================
 
@@ -403,7 +403,7 @@ void radio_configure_direction_finding_antenna_switch(void) {
 
 // DFECTRL1 register values
 
-#define NUMBEROF8US         3  // in unit of 8 us
+#define NUMBEROF8US         10  // in unit of 8 us //used to be 3
 #define DFEINEXTENSION      1  // 1:crc  0:payload
 #define TSWITCHSPACING      2  // 1:4us 2:2us 3: 1us
 #define TSAMPLESPACINGREF   6  // 1:4us 2:2us 3: 1us 4:500ns 5:250ns 6:125ns
@@ -414,7 +414,7 @@ void radio_configure_direction_finding_antenna_switch(void) {
 
 #define TSWITCHOFFSET             0 // 
 #define TSAMPLEOFFSET             3 //
-
+ 
 // DFEMODE
 
 #define DFEOPMODE_DISABLE         0 //
