@@ -15,6 +15,8 @@
 #include "icmpv6rpl.h"
 #include "idmanager.h"
 
+#include "leds.h"
+
 //=========================== defines =========================================
 
 const uint8_t cstorm_path0[] = "storm";
@@ -23,6 +25,8 @@ static const uint8_t dst_addr[] = {
         0xbb, 0xbb, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
 };
+
+#define PERIODIC_SENDING 0
 
 //=========================== variables =======================================
 
@@ -61,7 +65,7 @@ void cstorm_init(void) {
 
     //start a periodic timer
     //comment : not running by default
-    /*
+#if PERIODIC_SENDING
     cstorm_vars.period           = 6553;
 
     cstorm_vars.timerId          = opentimers_create(TIMER_GENERAL_PURPOSE, TASKPRIO_COAP);
@@ -72,7 +76,7 @@ void cstorm_init(void) {
         TIMER_PERIODIC,
         cstorm_timer_cb
     );
-    */
+#endif
 }
 
 //=========================== private =========================================
@@ -255,6 +259,7 @@ void cstorm_task_cb(void) {
         openqueue_freePacketBuffer(pkt);
     } else {
         cstorm_vars.busySendingCstorm = FALSE;
+        leds_debug_toggle();
     }
 }
 
