@@ -97,7 +97,7 @@ owerror_t cstorm_receive(
             // add CoAP payload
             if (packetfunctions_reserveHeader(&msg, 2) == E_FAIL) {
                 openqueue_freePacketBuffer(msg);
-                return;
+                return E_FAIL;
             }
             // return as big endian
             msg->payload[0] = (uint8_t)(cstorm_vars.period >> 8);

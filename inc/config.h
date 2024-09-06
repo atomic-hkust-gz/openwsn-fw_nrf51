@@ -103,7 +103,7 @@
  *
  */
 #ifndef OPENWSN_CSTORM_C
-#define OPENWSN_CSTORM_C (0)
+#define OPENWSN_CSTORM_C (1)
 #endif
 
 /**
@@ -211,7 +211,7 @@
  *
  */
 #ifndef OPENWSN_COAP_C
-#define OPENWSN_COAP_C (0)
+#define OPENWSN_COAP_C (1)
 #endif
 
 /**
@@ -233,7 +233,7 @@
  *
  */
 #ifndef OPENWSN_UDP_C
-#define OPENWSN_UDP_C (0)
+#define OPENWSN_UDP_C (1)
 #endif
 
 /**
