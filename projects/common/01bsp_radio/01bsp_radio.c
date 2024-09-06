@@ -17,6 +17,20 @@ end of frame event), it will turn on its error LED.
 \author Thomas Watteyne <watteyne@eecs.berkeley.edu>, August 2014.
 */
 
+/*
+  IF WITH BOOTLOADER !
+  
+  1. Softdevice
+  Options -> Configuration=Debug -> Debug -> Loader -> Addtional Load File[0]='s130_nrf51_2.0.1_softdevice.hex'
+
+  2. Placement
+  Options -> Configuration=Common -> Code -> Linker -> Section Placement Macros=
+  '
+  FLASH_START=0x1B000
+  SRAM_START=0x20001EB0
+  '
+*/
+
 #include "board.h"
 #include "radio.h"
 #include "leds.h"

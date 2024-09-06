@@ -14,6 +14,20 @@ When you run the application, you should see the LEDs "counting".
 \author Thomas Watteyne <thomas.watteyne@inria.fr>, July 2017.
 */
 
+/*
+  IF WITH BOOTLOADER !
+  
+  1. Softdevice
+  Options -> Configuration=Debug -> Debug -> Loader -> Addtional Load File[0]='s130_nrf51_2.0.1_softdevice.hex'
+
+  2. Placement
+  Options -> Configuration=Common -> Code -> Linker -> Section Placement Macros=
+  '
+  FLASH_START=0x1B000
+  SRAM_START=0x20001EB0
+  '
+*/
+
 #include "stdint.h"
 #include "stdio.h"
 // bsp modules required
