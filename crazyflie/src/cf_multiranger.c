@@ -60,7 +60,7 @@ void log_startLogBlock(int id, uint8_t period);
 
 //=========================== public ==========================================
 
-void mutiranger_init()
+void multiranger_init()
 {
     //TODO: Check mutiranger deck is connected
 
@@ -77,7 +77,7 @@ void mutiranger_init()
     log_startLogBlock(block_id, 10);  //the period will be multiplied by 10(in stm32), so 100 means 1000ms
 }
 
-void mutiranger_handle(uint8_t *data, uint8_t len)
+void multiranger_handle(uint8_t *data, uint8_t len)
 {
 
     if (len < 4 + sizeof(mutiranger_values))
@@ -93,68 +93,68 @@ void mutiranger_handle(uint8_t *data, uint8_t len)
 }
 
 // Getter
-uint16_t mutiranger_get_front_mm()
+uint16_t multiranger_get_front_mm()
 {
     return mutiranger_values.front;
 }
 
-uint16_t mutiranger_get_back_mm()
+uint16_t multiranger_get_back_mm()
 {
     return mutiranger_values.back;
 }
 
-uint16_t mutiranger_get_left_mm()
+uint16_t multiranger_get_left_mm()
 {
     return mutiranger_values.left;
 }
 
-uint16_t mutiranger_get_right_mm()
+uint16_t multiranger_get_right_mm()
 {
     return mutiranger_values.right;
 }
 
-uint16_t mutiranger_get_up_mm()
+uint16_t multiranger_get_up_mm()
 {
     return mutiranger_values.up;
 }
 
-uint16_t mutiranger_get_down_mm()
+uint16_t multiranger_get_down_mm()
 {
     return mutiranger_values.down;
 }
 
-bool mutiranger_front_isClose()
+bool multiranger_front_isClose()
 {
     return mutiranger_values.front < isCloseThreshold;
 }
 
-bool mutiranger_back_isClose()
+bool multiranger_back_isClose()
 {
     return mutiranger_values.back < isCloseThreshold;
 }
 
-bool mutiranger_left_isClose()
+bool multiranger_left_isClose()
 {
     return mutiranger_values.left < isCloseThreshold;
 }
 
-bool mutiranger_right_isClose()
+bool multiranger_right_isClose()
 {
     return mutiranger_values.right < isCloseThreshold;
 }
 
-bool mutiranger_up_isClose()
+bool multiranger_up_isClose()
 {
     return mutiranger_values.up < isCloseThreshold;
 }
 
-bool mutiranger_down_isClose()
+bool multiranger_down_isClose()
 {
     return mutiranger_values.down < isCloseThreshold;
 }
 
 // Setter
-void mutiranger_set_close_threshold(uint16_t threshold_mm)
+void multiranger_set_close_threshold(uint16_t threshold_mm)
 {   
     //0-4m
     if (threshold_mm > 4000)

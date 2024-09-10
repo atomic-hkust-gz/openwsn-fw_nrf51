@@ -93,10 +93,10 @@ void mainloop()
         high_level_enable();
         enHighLevel = true;
         leds_all_on();
-        mutiranger_init();
+        multiranger_init();
     }
 
-    if (mutiranger_up_isClose())
+    if (multiranger_up_isClose())
     {
         leds_all_on();
     }else{

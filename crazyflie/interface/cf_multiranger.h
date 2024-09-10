@@ -43,24 +43,25 @@ struct ops_setting_v2
 
 //=========================== prototypes ======================================
 
-void mutiranger_init();
-void mutiranger_handle(uint8_t *data, uint8_t len);
+//TODO: mutiranget_inMounted() // according the TOC, CTRP callback (port=2,channal=1)
+void multiranger_init();
+void multiranger_handle(uint8_t *data, uint8_t len);
 
 // Getter
-uint16_t mutiranger_get_front_mm();
-uint16_t mutiranger_get_back_mm();
-uint16_t mutiranger_get_left_mm();
-uint16_t mutiranger_get_right_mm();
-uint16_t mutiranger_get_up_mm();
-uint16_t mutiranger_get_down_mm();
-bool mutiranger_front_isClose();
-bool mutiranger_back_isClose();
-bool mutiranger_left_isClose();
-bool mutiranger_right_isClose();
-bool mutiranger_up_isClose();
-bool mutiranger_down_isClose();
+uint16_t multiranger_get_front_mm();
+uint16_t multiranger_get_back_mm();
+uint16_t multiranger_get_left_mm();
+uint16_t multiranger_get_right_mm();
+uint16_t multiranger_get_up_mm();
+uint16_t multiranger_get_down_mm();
+bool multiranger_front_isClose();
+bool multiranger_back_isClose();
+bool multiranger_left_isClose();
+bool multiranger_right_isClose();
+bool multiranger_up_isClose();
+bool multiranger_down_isClose();
 
 // Setter
-void mutiranger_set_close_threshold(uint16_t threshold_mm);
+void multiranger_set_close_threshold(uint16_t threshold_mm);
 
 #endif // __CF_MUTIRANGER_H__

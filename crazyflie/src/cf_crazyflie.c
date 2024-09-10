@@ -135,7 +135,7 @@ void _syslinkHandle()
         //ctrp data
         uint8_t *ctrp_data = slRxPacket.data + 1;
 
-        mutiranger_handle(ctrp_data, slRxPacket.length - 1);
+        multiranger_handle(ctrp_data, slRxPacket.length - 1);
       }
 
 

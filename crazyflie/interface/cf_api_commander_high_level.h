@@ -82,6 +82,8 @@ struct data_go_to
 //=========================== prototypes ======================================
 
 void high_level_enable();
+// TODO: high_level_isEnabled() // according the TOC, CTRP callback (port=2,channal=1)
+
 void high_level_takeoff(float absolute_height_m, float duration_s, float yaw);
 void high_level_land(float absolute_height_m, float duration_s, float yaw);
 void high_level_stop();
