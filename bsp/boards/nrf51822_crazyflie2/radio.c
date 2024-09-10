@@ -87,7 +87,7 @@ void radio_init(void) {
    // =====BLE================================================================================================================
    // BRIEF: Since nRF51 does not support ieee802.15.4, radio is implemented using the physical layer of BLE
    
-   NRF_RADIO->PCNF0 =   (((1UL) << RADIO_PCNF0_S0LEN_Pos) & RADIO_PCNF0_S0LEN_Msk) | 
+   NRF_RADIO->PCNF0 =   (((0UL) << RADIO_PCNF0_S0LEN_Pos) & RADIO_PCNF0_S0LEN_Msk) | 
                         (((0UL) << RADIO_PCNF0_S1LEN_Pos) & RADIO_PCNF0_S1LEN_Msk) |
                         (((8UL) << RADIO_PCNF0_LFLEN_Pos) & RADIO_PCNF0_LFLEN_Msk);
 
