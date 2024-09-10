@@ -12,8 +12,6 @@
     The "cf_uart" bsp is linked to the STM32F4. NRF_TX=P0.29=TXD, NRF_RX=P0.30=RXD(see cf_pinout.h)
 */
 
-#if __CF_UART_H__ // When the cf_uart.h is included, the uart.c will not be compiled
-
 #include "nrf51.h"
 #include "nrf51_bitfields.h"
 #include "board_info.h"
@@ -146,6 +144,7 @@ uint8_t uart_readByte(void) {
 
 //=========================== private =========================================
 
+#if __CF_UART_H__ // When the cf_uart.h is included, the uart.c will not be compiled
 void UART0_IRQHandler(void) {
 
     //debugpins_isr_set();
@@ -165,6 +164,7 @@ void UART0_IRQHandler(void) {
 
     //debugpins_isr_clr();
 }
+#endif
 
 //=========================== interrupt handlers ==============================
 
@@ -192,5 +192,3 @@ kick_scheduler_t uart_rx_isr(void) {
 
     return DO_NOT_KICK_SCHEDULER;
 }
-
-#endif

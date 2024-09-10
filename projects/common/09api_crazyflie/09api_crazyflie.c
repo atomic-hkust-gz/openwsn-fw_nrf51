@@ -76,6 +76,7 @@ int mote_main(void)
 
 int tick;
 bool enHighLevel = false;
+bool enMultiranger = false;
 
 // make sure onecall
 bool a = true;
@@ -88,12 +89,13 @@ void mainloop()
 {
     tick = systickGetTick(); // unsigned int
 
-    if (tick == 5000 && !enHighLevel)
+// MULTIRANGER CODE
+#if 0
+    if (tick == 5000 && !enMultiranger)
     {
-        high_level_enable();
-        enHighLevel = true;
-        leds_all_on();
         multiranger_init();
+        leds_all_on();
+        enMultiranger = true;
     }
 
     if (multiranger_up_isClose())
@@ -102,36 +104,46 @@ void mainloop()
     }else{
         leds_all_off();
     }
+#endif
 
-    // if (tick == 10000 && a)
-    //{
-    //    high_level_takeoff(0.5, 1.0, 0.0);
-    //    a = false;
-    // }
+// FLY CODE
+#if 0
+    if (tick == 5000 && !enHighLevel)
+    {
+        high_level_enable();
+        leds_all_on();
+        enHighLevel = true;
+    }
 
-    // if (tick == 11000 && b)
-    //{
-    //     _east_go_to(0.5, 0.0, 0.0);
-    //     b = false;
-    // }
+    if (tick == 10000 && a)
+    {
+       high_level_takeoff(0.5, 1.0, 0.0);
+       a = false;
+    }
 
-    // if (tick == 12000 && c)
-    //{
-    //     _east_go_to(0.0, 0.5, 0.0);
-    //     c = false;
-    // }
+    if (tick == 11000 && b)
+    {
+        _east_go_to(0.5, 0.0, 0.0);
+        b = false;
+    }
 
-    // if (tick == 13000 && d)
-    //{
-    //     _east_go_to(-0.5, -0.5, 0.0);
-    //     d = false;
-    // }
+    if (tick == 12000 && c)
+    {
+        _east_go_to(0.0, 0.5, 0.0);
+        c = false;
+    }
 
-    // if (tick == 14000 && e)
-    //{
-    //     high_level_land(0.0, 1.0, 0.0);
-    //     e = false;
-    // }
+    if (tick == 13000 && d)
+    {
+        _east_go_to(-0.5, -0.5, 0.0);
+        d = false;
+    }
+
+    if (tick == 14000 && e)
+    {
+        high_level_land(0.0, 1.0, 0.0);
+        e = false;
+    }
 
     if (tick >= 17000 && tick < 23000)
     {
@@ -139,6 +151,7 @@ void mainloop()
         leds_all_off();
         crazyflieShutdown();
     }
+#endif
 
     crazyflieHandle();
 }
