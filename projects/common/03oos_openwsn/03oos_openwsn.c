@@ -10,10 +10,19 @@
 #include "openstack.h"
 #include "opendefs.h"
 
+#if OPENWSN_CCRAZYFLIE_C
+#include "cf_crazyflie.h"
+#endif
+
 int mote_main(void) {
    
    // initialize
    board_init();
+
+#if OPENWSN_CCRAZYFLIE_C
+   crazyflieInit();
+#endif
+
    scheduler_init();
    openstack_init();
    

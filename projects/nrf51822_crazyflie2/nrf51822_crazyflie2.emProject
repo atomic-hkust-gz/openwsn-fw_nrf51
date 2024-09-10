@@ -9,9 +9,9 @@
     c_preprocessor_definitions="NDEBUG"
     gcc_optimization_level="Optimize For Size"
     link_time_optimization="No" />
-  <project Name="09api_crazyflie">
+  <project Name="01bsp_eui64">
     <configuration
-      LIBRARY_IO_TYPE="RTT"
+      LIBRARY_IO_TYPE="None"
       Name="Common"
       arm_architecture="v6M"
       arm_core_type="Cortex-M0"
@@ -25,8 +25,8 @@
       arm_simulator_memory_simulation_parameter="RWX 00000000,00100000,FFFFFFFF;RWX 20000000,00010000,CDCDCDCD"
       arm_target_device_name="nRF51822_xxAA"
       arm_target_interface_type="SWD"
-      c_preprocessor_definitions="NO_VTOR_CONFIG;NRF51822;BSP_DEFINES_ONLY;NRF51;SWI_DISABLE0;WIN32;NRF51822_CRAZYFLIE2"
-      c_user_include_directories="../../bsp/boards;../../bsp/boards/nrf51822_crazyflie2;../../bsp/boards/nrf51822_crazyflie2/sdk;../../crazyflie/interface;../../crazyflie/ow/interface;../../inc"
+      c_preprocessor_definitions="NO_VTOR_CONFIG;NRF51822;BSP_DEFINES_ONLY;NRF51;SWI_DISABLE0;NRF51822_CRAZYFLIE2"
+      c_user_include_directories="../../bsp/boards;../../bsp/boards/nrf51822_crazyflie2;../../bsp/boards/nrf51822_crazyflie2/sdk;../../inc"
       debug_additional_load_file=""
       debug_register_definition_file=""
       debug_start_from_entry_point_symbol="No"
@@ -39,7 +39,7 @@
       linker_scanf_fmt_level="long"
       linker_section_placement_file="flash_placement.xml"
       linker_section_placement_macros="FLASH_START=0x00000000;SRAM_START=0x20000000"
-      linker_section_placements_segments="FLASH RX 0x00000000 0x00040000;RAM RWX 0x20000000 0x00002000"
+      linker_section_placements_segments="FLASH RX 0x00000000 0x00040000;RAM RWX 0x20000000 0x00004000"
       macros=""
       project_directory=""
       project_type="Executable" />
@@ -47,6 +47,12 @@
       Name="Debug"
       debug_additional_load_file=""
       linker_section_placements_segments="FLASH RX 0x00000000 0x00040000;RAM RWX 0x20000000 0x00004000" />
+    <folder
+      Name="application"
+      exclude=""
+      filter="*.c"
+      path="../common/01bsp_eui64"
+      recurse="Yes" />
     <folder
       Name="bsp"
       exclude="system_nrf51.c"
@@ -58,18 +64,6 @@
       exclude=""
       filter="*.h"
       path="../../inc"
-      recurse="Yes" />
-    <folder
-      Name="application"
-      exclude=""
-      filter="*.c"
-      path="../common/09api_crazyflie"
-      recurse="Yes" />
-    <folder
-      Name="crazyflie"
-      exclude=""
-      filter="*.c;*.h"
-      path="../../crazyflie"
       recurse="Yes" />
   </project>
   <project Name="01bsp_leds">
@@ -455,7 +449,7 @@
       arm_target_device_name="nRF51822_xxAA"
       arm_target_interface_type="SWD"
       c_preprocessor_definitions="NRF51822;BOARD_CRAZYFLIE_NRF;BSP_DEFINES_ONLY;NRF51;SWI_DISABLE0;NRF51822_CRAZYFLIE2;__WIN32__;OPENWSN_UDP_C;BAN_OPENWSN_UINJECT_C;OPENWSN_COAP_C;OPENWSN_CCRAZYFLIE_C"
-      c_user_include_directories="../../bsp/boards;../../bsp/boards/nrf51822_crazyflie2;../../bsp/boards/nrf51822_crazyflie2/sdk;../../bsp/boards/nrf51822_crazyflie2/crazyflie/interface;../../bsp/boards/nrf51822_crazyflie2/crazyflie/ow/interface;../../inc;../../drivers/common;../../drivers/common/crypto;../../kernel;../../openstack;../../openstack/02a-MAClow;../../openstack/02b-MAChigh;../../openstack/03a-IPHC;../../openstack/03b-IPv6;../../openstack/04-TRAN;../../openstack/04-TRAN/sock;../../openstack/cross-layers;../../openweb/;../../openweb/opencoap;../../openapps;../../openapps/uinject;../../openapps/cinfo;../../openapps/cjoin;../../openapps/cled;../../openapps/cweelknown;../../openapps/uecho;../../openapps/cstorm"
+      c_user_include_directories="../../bsp/boards;../../bsp/boards/nrf51822_crazyflie2;../../bsp/boards/nrf51822_crazyflie2/sdk;../../crazyflie/interface;../../crazyflie/ow/interface;../../inc;../../drivers/common;../../drivers/common/crypto;../../kernel;../../openstack;../../openstack/02a-MAClow;../../openstack/02b-MAChigh;../../openstack/03a-IPHC;../../openstack/03b-IPv6;../../openstack/04-TRAN;../../openstack/04-TRAN/sock;../../openstack/cross-layers;../../openweb/;../../openweb/opencoap;../../openapps;../../openapps/uinject;../../openapps/cinfo;../../openapps/cjoin;../../openapps/cled;../../openapps/cweelknown;../../openapps/uecho;../../openapps/cstorm"
       debug_additional_load_file=""
       debug_register_definition_file=""
       debug_start_from_entry_point_symbol="No"
@@ -495,6 +489,12 @@
       path="../../bsp/boards/nrf51822_crazyflie2"
       recurse="Yes" />
     <folder
+      Name="crazyflie"
+      exclude=""
+      filter="*.c;*.h"
+      path="../../crazyflie"
+      recurse="Yes" />
+    <folder
       Name="drivers"
       exclude=""
       filter="*.h;*.c"
@@ -513,16 +513,16 @@
       path="../../kernel"
       recurse="Yes" />
     <folder
-      Name="openstack"
-      exclude=""
-      filter="*.h;*.c"
-      path="../../openstack"
-      recurse="Yes" />
-    <folder
       Name="openapps"
       exclude=""
       filter="*.h;*.c"
       path="../../openapps"
+      recurse="Yes" />
+    <folder
+      Name="openstack"
+      exclude=""
+      filter="*.h;*.c"
+      path="../../openstack"
       recurse="Yes" />
     <folder
       Name="openweb"
@@ -531,9 +531,9 @@
       path="../../openweb"
       recurse="Yes" />
   </project>
-  <project Name="01bsp_eui64">
+  <project Name="09api_crazyflie">
     <configuration
-      LIBRARY_IO_TYPE="None"
+      LIBRARY_IO_TYPE="RTT"
       Name="Common"
       arm_architecture="v6M"
       arm_core_type="Cortex-M0"
@@ -547,8 +547,8 @@
       arm_simulator_memory_simulation_parameter="RWX 00000000,00100000,FFFFFFFF;RWX 20000000,00010000,CDCDCDCD"
       arm_target_device_name="nRF51822_xxAA"
       arm_target_interface_type="SWD"
-      c_preprocessor_definitions="NO_VTOR_CONFIG;NRF51822;BSP_DEFINES_ONLY;NRF51;SWI_DISABLE0;NRF51822_CRAZYFLIE2"
-      c_user_include_directories="../../bsp/boards;../../bsp/boards/nrf51822_crazyflie2;../../bsp/boards/nrf51822_crazyflie2/sdk;../../inc"
+      c_preprocessor_definitions="NO_VTOR_CONFIG;NRF51822;BSP_DEFINES_ONLY;NRF51;SWI_DISABLE0;WIN32;NRF51822_CRAZYFLIE2"
+      c_user_include_directories="../../bsp/boards;../../bsp/boards/nrf51822_crazyflie2;../../bsp/boards/nrf51822_crazyflie2/sdk;../../crazyflie/interface;../../crazyflie/ow/interface;../../inc"
       debug_additional_load_file=""
       debug_register_definition_file=""
       debug_start_from_entry_point_symbol="No"
@@ -561,7 +561,7 @@
       linker_scanf_fmt_level="long"
       linker_section_placement_file="flash_placement.xml"
       linker_section_placement_macros="FLASH_START=0x00000000;SRAM_START=0x20000000"
-      linker_section_placements_segments="FLASH RX 0x00000000 0x00040000;RAM RWX 0x20000000 0x00004000"
+      linker_section_placements_segments="FLASH RX 0x00000000 0x00040000;RAM RWX 0x20000000 0x00002000"
       macros=""
       project_directory=""
       project_type="Executable" />
@@ -573,13 +573,19 @@
       Name="application"
       exclude=""
       filter="*.c"
-      path="../common/01bsp_eui64"
+      path="../common/09api_crazyflie"
       recurse="Yes" />
     <folder
       Name="bsp"
       exclude="system_nrf51.c"
       filter="*.s;*.c;*.h"
       path="../../bsp/boards/nrf51822_crazyflie2"
+      recurse="Yes" />
+    <folder
+      Name="crazyflie"
+      exclude=""
+      filter="*.c;*.h"
+      path="../../crazyflie"
       recurse="Yes" />
     <folder
       Name="inc"

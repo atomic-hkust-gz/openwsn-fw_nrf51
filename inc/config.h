@@ -361,7 +361,7 @@
  *
  */
 #ifndef PACKETQUEUE_LENGTH
-#define PACKETQUEUE_LENGTH              20
+#define PACKETQUEUE_LENGTH              10
 #endif
 
 /**

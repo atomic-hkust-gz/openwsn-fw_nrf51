@@ -110,8 +110,12 @@ void openserial_init(void) {
     );
 
     // UART
+
+#if __CF_UART_H__ // When the cf_uart.h is included, the uart.c will not be initialized.
     uart_setCallbacks(isr_openserial_tx, isr_openserial_rx);
     uart_enableInterrupts();
+#endif
+
 }
 
 //===== transmitting
@@ -464,11 +468,15 @@ void openserial_flush(void) {
             // send CTS
 #if BOARD_FASTSIM_ENABLED
 #else
-            if (openserial_vars.fInhibited == TRUE) {
-                uart_setCTS(FALSE);
-            } else {
-                uart_setCTS(TRUE);
-            }
+
+  #if __CF_UART_H__ // When the cf_uart.h is included, the uart.c will not be initialized.
+              if (openserial_vars.fInhibited == TRUE) {
+                  uart_setCTS(FALSE);
+              } else {
+                  uart_setCTS(TRUE);
+              }
+  #endif
+
 #endif
             openserial_vars.ctsStateChanged = FALSE;
         } else {
@@ -486,7 +494,10 @@ void openserial_flush(void) {
                         &openserial_vars.outputBufIdxW
                     );
 #else
+
+  #if __CF_UART_H__ // When the cf_uart.h is included, the uart.c will not be initialized.
                     uart_writeByte(openserial_vars.outputBuf[OUTPUT_BUFFER_MASK & (openserial_vars.outputBufIdxR++)]);
+  #endif
                     openserial_vars.fBusyFlushing = TRUE;
 #endif
                 }

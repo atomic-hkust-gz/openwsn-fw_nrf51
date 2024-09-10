@@ -10,6 +10,10 @@
 #include "debugpins.h"
 #include "leds.h"
 
+#if OPENWSN_CCRAZYFLIE_C
+#include "cf_crazyflie.h"
+#endif
+
 //=========================== variables =======================================
 
 scheduler_vars_t scheduler_vars;
@@ -39,6 +43,12 @@ void scheduler_init(void) {
 void scheduler_start(void) {
     taskList_item_t* pThisTask;
     while (1) {
+
+#if OPENWSN_CCRAZYFLIE_C
+        crazyflieHandle();
+#endif
+
+
         while(scheduler_vars.task_list!=NULL) {
          // there is still at least one task in the linked-list of tasks
 
