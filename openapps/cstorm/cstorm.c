@@ -23,8 +23,11 @@ const uint8_t cstorm_path0[] = "storm";
 const uint8_t cstorm_payload[] = "OpenWSN";
 static const uint8_t dst_addr[] = {
         0xbb, 0xbb, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
+        0x55, 0x17, 0x56, 0x86, 0x7f, 0xfc, 0xed, 0xf4
 };
+
+// 51-6309     0x55, 0x17, 0x56, 0x86, 0x7f, 0xfc, 0xed, 0xf4
+// T           0x93, 0xf3, 0x19, 0x83, 0x1f, 0xad, 0x99, 0xd6
 
 #define PERIODIC_SENDING 0
 
@@ -66,7 +69,7 @@ void cstorm_init(void) {
     //start a periodic timer
     //comment : not running by default
 #if PERIODIC_SENDING
-    cstorm_vars.period           = 6553;
+    cstorm_vars.period           = 2000;
 
     cstorm_vars.timerId          = opentimers_create(TIMER_GENERAL_PURPOSE, TASKPRIO_COAP);
     opentimers_scheduleIn(
@@ -89,6 +92,8 @@ owerror_t cstorm_receive(
         uint8_t *coap_outgoingOptionsLen
 ) {
     owerror_t outcome;
+
+    leds_debug_toggle();
 
     switch (coap_header->Code) {
 
