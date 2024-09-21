@@ -103,7 +103,7 @@
  *
  */
 #ifndef OPENWSN_CSTORM_C
-#define OPENWSN_CSTORM_C (1)
+#define OPENWSN_CSTORM_C (0)
 #endif
 
 /**
@@ -199,6 +199,19 @@
 #ifndef OPENWSN_CJOIN_C
 #define OPENWSN_CJOIN_C (0)
 #endif
+
+/**
+ * \def OPENWSN_CMULTIRANGER_C
+ *
+ * The Crazyflie multiranger application.
+ *
+ * Requires: OPENWSN_UDP_C, OPENWSN_COAP_C
+ *
+ */
+#ifndef OPENWSN_CMULTIRANGER_C
+#define OPENWSN_CMULTIRANGER_C (1)
+#endif
+
 
 // ======================= OpenWeb configuration =======================
 

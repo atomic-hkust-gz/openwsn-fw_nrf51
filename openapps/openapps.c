@@ -56,6 +56,10 @@
 #include "cstorm.h"
 #endif
 
+#if OPENWSN_CMULTIRANGER_C
+#include "cmultiranger.h"
+#endif
+
 //=========================== variables =======================================
 
 //=========================== prototypes ======================================
@@ -113,4 +117,7 @@ void openapps_init(void) {
     cstorm_init();
 #endif
 
+#if OPENWSN_CMULTIRANGER_C
+    cmultiranger_init();
+#endif
 }
