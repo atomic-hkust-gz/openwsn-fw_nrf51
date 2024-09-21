@@ -49,14 +49,35 @@
 //=========================== variables =======================================
 
 static struct mutiranger_data mutiranger_values = {0, 0, 0, 0, 0, 0};
+static struct mutiranger_isClose_data mutiranger_isClose = {0, 0, 0, 0, 0, 0};
+
 static int variable_id[6] = {LOG_RANGER_FRONT_ID, LOG_RANGER_BACK_ID, LOG_RANGER_LEFT_ID, LOG_RANGER_RIGHT_ID, LOG_RANGER_UP_ID, LOG_RANGER_ZRANGE_ID};
 static int block_id = 0;
 static uint16_t isCloseThreshold = 200; // mm
+
+//values change callback
+void (*mutiranger_values_change_callback)(struct mutiranger_data *data) = NULL;
+void (*mutiranger_isClose_callback)(struct mutiranger_isClose_data *data) = NULL;
 
 //=========================== prototypes ======================================
 
 void log_createLogBlock_v2_uint16(int block_id, struct ops_setting_v2 *ops, uint8_t ops_len);
 void log_startLogBlock(int id, uint8_t period);
+
+// Getter
+uint16_t multiranger_get_front_mm();
+uint16_t multiranger_get_back_mm();
+uint16_t multiranger_get_left_mm();
+uint16_t multiranger_get_right_mm();
+uint16_t multiranger_get_up_mm();
+uint16_t multiranger_get_down_mm();
+bool multiranger_front_isClose();
+bool multiranger_back_isClose();
+bool multiranger_left_isClose();
+bool multiranger_right_isClose();
+bool multiranger_up_isClose();
+bool multiranger_down_isClose();
+
 
 //=========================== public ==========================================
 
@@ -90,6 +111,28 @@ void multiranger_handle(uint8_t *data, uint8_t len)
     uint8_t *log_data = data + 4;
 
     memcpy(&mutiranger_values, log_data, sizeof(mutiranger_values));
+
+    // TODO: value change?
+
+    //=========================================================================
+
+    // isClose change?
+    struct mutiranger_isClose_data isClose = {0, 0, 0, 0, 0, 0};
+    isClose.front = multiranger_front_isClose();
+    isClose.back = multiranger_back_isClose();
+    isClose.left = multiranger_left_isClose();
+    isClose.right = multiranger_right_isClose();
+    isClose.up = multiranger_up_isClose();
+    isClose.down = multiranger_down_isClose();
+
+    if (memcmp(&mutiranger_isClose, &isClose, sizeof(isClose)) != 0)
+    {
+        memcpy(&mutiranger_isClose, &isClose, sizeof(isClose));
+        if (mutiranger_isClose_callback != NULL)
+        {
+            mutiranger_isClose_callback(&mutiranger_isClose);
+        }
+    }
 }
 
 // Getter
@@ -165,7 +208,15 @@ void multiranger_set_close_threshold(uint16_t threshold_mm)
     isCloseThreshold = threshold_mm;
 }
 
+void multiranger_set_callback(void (*callback)(struct mutiranger_data *data))
+{
+    mutiranger_values_change_callback = callback;
+}
 
+void multiranger_set_isClose_callback(void (*callback)(struct mutiranger_isClose_data *data))
+{
+    mutiranger_isClose_callback = callback;
+}
 
 
 //=========================== private =========================================

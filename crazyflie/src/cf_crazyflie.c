@@ -77,6 +77,13 @@ void crazyflieHandle()
   _syslinkHandle();
   //status_led_handle();
   pmProcess();
+
+  // Multi-Ranger Init must delay.
+  if (systickGetTick() == 2000)
+  {
+    multiranger_init();
+  }
+
 }
 
 void crazyflieEmergencyStop()

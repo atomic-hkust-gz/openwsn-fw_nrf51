@@ -16,11 +16,14 @@
 #include "idmanager.h"
 
 #include "leds.h"
+#include "cf_multiranger.h"
 
 //=========================== defines =========================================
 
 const uint8_t cmultiranger_path0[] = "multiranger";
-const uint8_t cmultiranger_payload[] = "TEST";
+// const uint8_t cmultiranger_payload[] = "TEST";
+struct mutiranger_isClose_data cmultiranger_payload = {0, 0, 0, 0, 0, 0};
+
 static const uint8_t dst_addr[] = {
         0xbb, 0xbb, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x93, 0xf3, 0x19, 0x83, 0x1f, 0xad, 0x99, 0xd6
@@ -34,6 +37,7 @@ static const uint8_t dst_addr[] = {
 //=========================== variables =======================================
 
 cmultiranger_vars_t cmultiranger_vars;
+struct mutiranger_isClose_data cmultiranger_isClose_data; //received data
 
 //=========================== prototypes ======================================
 
@@ -49,6 +53,8 @@ void cmultiranger_timer_cb(opentimers_id_t id);
 void cmultiranger_task_cb(void);
 
 void cmultiranger_sendDone(OpenQueueEntry_t *msg, owerror_t error);
+
+void multiranger_isClose_callback(struct mutiranger_isClose_data *data);
 
 //=========================== public ==========================================
 
@@ -68,6 +74,7 @@ void cmultiranger_init(void) {
 
     //start a periodic timer
     //comment : not running by default
+    cmultiranger_vars.period           = 1; //skip check
 #if PERIODIC_SENDING
     cmultiranger_vars.period           = 500;
 
@@ -80,6 +87,9 @@ void cmultiranger_init(void) {
         cmultiranger_timer_cb
     );
 #endif
+
+    // register the callback
+    multiranger_set_isClose_callback(&multiranger_isClose_callback);
 }
 
 //=========================== private =========================================
@@ -92,8 +102,6 @@ owerror_t cmultiranger_receive(
         uint8_t *coap_outgoingOptionsLen
 ) {
     owerror_t outcome;
-
-    leds_error_toggle();
 
     switch (coap_header->Code) {
 
@@ -125,29 +133,39 @@ owerror_t cmultiranger_receive(
                 coap_header->Code = COAP_CODE_RESP_BADREQ;
             }
 
-            // read the new period
-            cmultiranger_vars.period = 0;
-            cmultiranger_vars.period |= (msg->payload[0] << 8);
-            cmultiranger_vars.period |= msg->payload[1];
+            //Get Multi-Ranger isClose data
+            cmultiranger_isClose_data = *((struct mutiranger_isClose_data *) msg->payload);
 
-            /*
-            // stop and start again only if period > 0
-            opentimers_cancel(cmultiranger_vars.timerId);
-
-            if(cmultiranger_vars.period > 0) {
-                  opentimers_scheduleIn(
-                      cmultiranger_vars.timerId,
-                      cmultiranger_vars.period,
-                      TIME_MS,
-                      TIMER_PERIODIC,
-                      cmultiranger_timer_cb
-                  );
+            if (cmultiranger_isClose_data.up) {
+                leds_error_on();
+            } else {
+                leds_error_off();
             }
-            */
+            
 
-            // reset packet payload
-            msg->payload = &(msg->packet[127]);
-            msg->length = 0;
+            // read the new period
+            // cmultiranger_vars.period = 0;
+            // cmultiranger_vars.period |= (msg->payload[0] << 8);
+            // cmultiranger_vars.period |= msg->payload[1];
+
+            // /*
+            // // stop and start again only if period > 0
+            // opentimers_cancel(cmultiranger_vars.timerId);
+
+            // if(cmultiranger_vars.period > 0) {
+            //       opentimers_scheduleIn(
+            //           cmultiranger_vars.timerId,
+            //           cmultiranger_vars.period,
+            //           TIME_MS,
+            //           TIMER_PERIODIC,
+            //           cmultiranger_timer_cb
+            //       );
+            // }
+            // */
+
+            // // reset packet payload
+            // msg->payload = &(msg->packet[127]);
+            // msg->length = 0;
 
             // set the CoAP header
             coap_header->Code = COAP_CODE_RESP_CHANGED;
@@ -229,7 +247,7 @@ void cmultiranger_task_cb(void) {
         openqueue_freePacketBuffer(pkt);
         return;
     }
-    memcpy(&pkt->payload[0], cmultiranger_payload, sizeof(cmultiranger_payload) - 1);
+    memcpy(&pkt->payload[0], &cmultiranger_payload, sizeof(cmultiranger_payload));
 
     // location-path option
     options[0].type = COAP_OPTION_NUM_URIPATH;
@@ -264,7 +282,6 @@ void cmultiranger_task_cb(void) {
         openqueue_freePacketBuffer(pkt);
     } else {
         cmultiranger_vars.busySendingCmultiranger = FALSE;
-        leds_error_toggle();
     }
 }
 
@@ -274,6 +291,17 @@ void cmultiranger_sendDone(OpenQueueEntry_t *msg, owerror_t error) {
 
     // allow to send next cmultiranger packet
     cmultiranger_vars.busySendingCmultiranger = FALSE;
+}
+
+// Multiranger IsClose Change Callback
+// Receive the data from the Multiranger bsp
+void multiranger_isClose_callback(struct mutiranger_isClose_data *data) {
+    // Update the payload
+    cmultiranger_payload = *data;
+
+    // Send CoAP message
+    cmultiranger_task_cb();
+    leds_error_toggle();
 }
 
 #endif /* OPENWSN_CMULTIRANGER_C */

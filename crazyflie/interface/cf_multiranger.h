@@ -33,6 +33,15 @@ struct mutiranger_data {
     uint16_t down;
 } __attribute__((packed));
 
+struct mutiranger_isClose_data {
+    bool front;
+    bool back;
+    bool left;
+    bool right;
+    bool up;
+    bool down;
+} __attribute__((packed));
+
 struct ops_setting_v2
 {
     uint8_t logType;
@@ -63,5 +72,6 @@ bool multiranger_down_isClose();
 
 // Setter
 void multiranger_set_close_threshold(uint16_t threshold_mm);
+void multiranger_set_callback(void (*callback)(struct mutiranger_data *data));
 
 #endif // __CF_MUTIRANGER_H__
