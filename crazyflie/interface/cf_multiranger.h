@@ -73,5 +73,6 @@ bool multiranger_down_isClose();
 // Setter
 void multiranger_set_close_threshold(uint16_t threshold_mm);
 void multiranger_set_callback(void (*callback)(struct mutiranger_data *data));
+void multiranger_set_isClose_callback(void (*callback)(struct mutiranger_isClose_data *data));
 
 #endif // __CF_MUTIRANGER_H__
