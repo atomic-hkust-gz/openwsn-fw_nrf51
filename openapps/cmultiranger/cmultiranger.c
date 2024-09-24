@@ -27,12 +27,13 @@ struct mutiranger_isClose_data cmultiranger_payload = {0, 0, 0, 0, 0, 0};
 
 static const uint8_t dst_addr[] = {
         0xbb, 0xbb, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x13, 0x9d, 0x7b, 0x05, 0xa7, 0xba, 0xb8, 0xcb
+        0xae, 0x64, 0x81, 0x79, 0x6d, 0xc2, 0x16, 0xcc
 };
 
 // 51-6309     0x55, 0x17, 0x56, 0x86, 0x7f, 0xfc, 0xed, 0xf4
 // T           0x93, 0xf3, 0x19, 0x83, 0x1f, 0xad, 0x99, 0xd6
 // C           0x13, 0x9d, 0x7b, 0x05, 0xa7, 0xba, 0xb8, 0xcb
+// D           0xae, 0x64, 0x81, 0x79, 0x6d, 0xc2, 0x16, 0xcc
 
 #define PERIODIC_SENDING 0
 #define PUSH_ENABLED 1
@@ -168,7 +169,7 @@ owerror_t cmultiranger_receive(
             //     coap_header->Code = COAP_CODE_RESP_BADREQ;
             // }
 
-            if (msg->length == sizeof(cmultiranger_payload)) {
+            if (ieee154e_isSynch()) {
 
                 //Get Multi-Ranger isClose data
                 cmultiranger_isClose_data = *((struct mutiranger_isClose_data *) msg->payload);
@@ -376,13 +377,14 @@ void multiranger_isClose_callback(struct mutiranger_isClose_data *data) {
 //Push Enabled
 
     // === Send the velocity to other Crazyflie ===
-
+#if 1
     // Update the payload
     cmultiranger_payload = *data;
 
     // Send CoAP message
     cmultiranger_task_cb();
     leds_error_toggle();
+#endif
 }
 
 // =============================================================
