@@ -27,11 +27,12 @@ struct mutiranger_isClose_data cmultiranger_payload = {0, 0, 0, 0, 0, 0};
 
 static const uint8_t dst_addr[] = {
         0xbb, 0xbb, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x93, 0xf3, 0x19, 0x83, 0x1f, 0xad, 0x99, 0xd6
+        0x13, 0x9d, 0x7b, 0x05, 0xa7, 0xba, 0xb8, 0xcb
 };
 
 // 51-6309     0x55, 0x17, 0x56, 0x86, 0x7f, 0xfc, 0xed, 0xf4
 // T           0x93, 0xf3, 0x19, 0x83, 0x1f, 0xad, 0x99, 0xd6
+// C           0x13, 0x9d, 0x7b, 0x05, 0xa7, 0xba, 0xb8, 0xcb
 
 #define PERIODIC_SENDING 0
 #define PUSH_ENABLED 1
@@ -162,28 +163,37 @@ owerror_t cmultiranger_receive(
 
         case COAP_CODE_REQ_PUT:
 
-            if (msg->length != 2) {
+            // if (msg->length != 2) {
+            //     outcome = E_FAIL;
+            //     coap_header->Code = COAP_CODE_RESP_BADREQ;
+            // }
+
+            if (msg->length == sizeof(cmultiranger_payload)) {
+
+                //Get Multi-Ranger isClose data
+                cmultiranger_isClose_data = *((struct mutiranger_isClose_data *) msg->payload);
+
+                // if (cmultiranger_isClose_data.up) {
+                //     leds_error_on();
+                // } else {
+                //     leds_error_off();
+                // }
+
+                multiranger_isClose_callback(&cmultiranger_isClose_data);
+
+                // reset packet payload
+                msg->payload = &(msg->packet[127]);
+                msg->length = 0;
+
+                // set the CoAP header
+                coap_header->Code = COAP_CODE_RESP_CHANGED;
+
+                outcome = E_SUCCESS;
+                    
+            }else{
                 outcome = E_FAIL;
                 coap_header->Code = COAP_CODE_RESP_BADREQ;
             }
-
-            //Get Multi-Ranger isClose data
-            cmultiranger_isClose_data = *((struct mutiranger_isClose_data *) msg->payload);
-
-            if (cmultiranger_isClose_data.up) {
-                leds_error_on();
-            } else {
-                leds_error_off();
-            }
-
-            // // reset packet payload
-            msg->payload = &(msg->packet[127]);
-            msg->length = 0;
-
-            // set the CoAP header
-            coap_header->Code = COAP_CODE_RESP_CHANGED;
-
-            outcome = E_SUCCESS;
             break;
 
         default:
@@ -367,12 +377,12 @@ void multiranger_isClose_callback(struct mutiranger_isClose_data *data) {
 
     // === Send the velocity to other Crazyflie ===
 
-    // // Update the payload
-    // cmultiranger_payload = *data;
+    // Update the payload
+    cmultiranger_payload = *data;
 
-    // // Send CoAP message
-    // cmultiranger_task_cb();
-    // leds_error_toggle();
+    // Send CoAP message
+    cmultiranger_task_cb();
+    leds_error_toggle();
 }
 
 // =============================================================
