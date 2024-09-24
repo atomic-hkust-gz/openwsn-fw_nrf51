@@ -79,10 +79,18 @@ void crazyflieHandle()
   pmProcess();
 
   // Multi-Ranger Init must delay.
-  if (systickGetTick() == 2000)
+  if (systickGetTick() == 5000)
   {
     multiranger_init();
   }
+
+#if 0
+
+  if (systickGetTick() == 30000){
+    crazyflieEmergencyStop();
+  }
+
+#endif
 
 }
 

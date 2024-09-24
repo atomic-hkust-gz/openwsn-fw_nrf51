@@ -17,7 +17,8 @@
 
 #include "leds.h"
 #include "cf_multiranger.h"
-
+#include "cf_api_commander.h"
+// #include "cf_param.h"
 //=========================== defines =========================================
 
 const uint8_t cmultiranger_path0[] = "multiranger";
@@ -33,11 +34,22 @@ static const uint8_t dst_addr[] = {
 // T           0x93, 0xf3, 0x19, 0x83, 0x1f, 0xad, 0x99, 0xd6
 
 #define PERIODIC_SENDING 0
+#define PUSH_ENABLED 1
+
+#define DEFAULT_VELOCITY 0.5
+#define DEFAULT_HEIGHT 0.5
+
+struct hoverPacket_s current_setpoint = {0, 0, 0, 0};
 
 //=========================== variables =======================================
 
 cmultiranger_vars_t cmultiranger_vars;
 struct mutiranger_isClose_data cmultiranger_isClose_data; //received data
+
+opentimers_id_t moveDistance_timerId;
+opentimers_id_t sendSetpoint_timerId;
+bool isMoving = false;
+bool isFlying = false;
 
 //=========================== prototypes ======================================
 
@@ -55,6 +67,11 @@ void cmultiranger_task_cb(void);
 void cmultiranger_sendDone(OpenQueueEntry_t *msg, owerror_t error);
 
 void multiranger_isClose_callback(struct mutiranger_isClose_data *data);
+
+void vel_land();
+void vel_take_off();
+void periodic_send_setpoint(opentimers_id_t id);
+//void cmultiranger_reset_position_estimator();
 
 //=========================== public ==========================================
 
@@ -88,7 +105,24 @@ void cmultiranger_init(void) {
     );
 #endif
 
+#if 1
+
+    sendSetpoint_timerId = opentimers_create(TIMER_GENERAL_PURPOSE, TASKPRIO_COAP);
+    opentimers_scheduleIn(
+        sendSetpoint_timerId,
+        100,
+        TIME_MS,
+        TIMER_PERIODIC,
+        periodic_send_setpoint
+    );
+
+#endif
+
+    // Move Distance Timer
+    moveDistance_timerId = opentimers_create(TIMER_GENERAL_PURPOSE, TASKPRIO_COAP);
+
     // register the callback
+    multiranger_set_close_threshold(300);
     multiranger_set_isClose_callback(&multiranger_isClose_callback);
 }
 
@@ -141,31 +175,10 @@ owerror_t cmultiranger_receive(
             } else {
                 leds_error_off();
             }
-            
-
-            // read the new period
-            // cmultiranger_vars.period = 0;
-            // cmultiranger_vars.period |= (msg->payload[0] << 8);
-            // cmultiranger_vars.period |= msg->payload[1];
-
-            // /*
-            // // stop and start again only if period > 0
-            // opentimers_cancel(cmultiranger_vars.timerId);
-
-            // if(cmultiranger_vars.period > 0) {
-            //       opentimers_scheduleIn(
-            //           cmultiranger_vars.timerId,
-            //           cmultiranger_vars.period,
-            //           TIME_MS,
-            //           TIMER_PERIODIC,
-            //           cmultiranger_timer_cb
-            //       );
-            // }
-            // */
 
             // // reset packet payload
-            // msg->payload = &(msg->packet[127]);
-            // msg->length = 0;
+            msg->payload = &(msg->packet[127]);
+            msg->length = 0;
 
             // set the CoAP header
             coap_header->Code = COAP_CODE_RESP_CHANGED;
@@ -254,7 +267,6 @@ void cmultiranger_task_cb(void) {
     options[0].length = sizeof(cmultiranger_path0) - 1;
     options[0].pValue = (uint8_t *) cmultiranger_path0;
 
-
     // content-type option
     medType = COAP_MEDTYPE_APPOCTETSTREAM;
     options[1].type = COAP_OPTION_NUM_CONTENTFORMAT;
@@ -293,15 +305,175 @@ void cmultiranger_sendDone(OpenQueueEntry_t *msg, owerror_t error) {
     cmultiranger_vars.busySendingCmultiranger = FALSE;
 }
 
+// =============================================================
+
+void periodic_send_setpoint(opentimers_id_t id) {
+    if (!isFlying) {
+        return;
+    }
+
+    // Send CoAP message
+    send_hover_setpoint(current_setpoint.vx, current_setpoint.vy, current_setpoint.yawrate, current_setpoint.zDistance);
+}
+
+void set_setpoint(float vx, float vy, float yawrate, float zDistance) {
+    current_setpoint.vx = vx;
+    current_setpoint.vy = vy;
+    current_setpoint.yawrate = yawrate;
+    current_setpoint.zDistance = zDistance;
+}
+
 // Multiranger IsClose Change Callback
 // Receive the data from the Multiranger bsp
 void multiranger_isClose_callback(struct mutiranger_isClose_data *data) {
-    // Update the payload
-    cmultiranger_payload = *data;
 
-    // Send CoAP message
-    cmultiranger_task_cb();
-    leds_error_toggle();
+#if PUSH_ENABLED
+
+    // Takeoff or Landing?
+    if (isFlying && data->up) {
+        vel_land();
+    }else if (!isFlying && data->up) {
+        vel_take_off();
+    }
+
+    if(!isFlying){
+        return;
+    }
+
+    // Change?
+    float velocity = DEFAULT_VELOCITY;
+    float velocity_x = 0.0;
+    float velocity_y = 0.0;
+
+    // Direction?
+    if (data->front) {
+        velocity_x -= velocity;
+    }
+    if (data->back) {
+        velocity_x += velocity;
+    }
+
+    if (data->left) {
+        velocity_y -= velocity;
+    }
+    if (data->right) {
+        velocity_y += velocity;
+    }
+
+    set_setpoint(velocity_x, velocity_y, 0, DEFAULT_HEIGHT);
+
+#endif
+//Push Enabled
+
+    // === Send the velocity to other Crazyflie ===
+
+    // // Update the payload
+    // cmultiranger_payload = *data;
+
+    // // Send CoAP message
+    // cmultiranger_task_cb();
+    // leds_error_toggle();
 }
+
+// =============================================================
+
+void vel_take_off_done(opentimers_id_t id) {
+    isMoving = false;
+}
+
+void vel_take_off() {
+
+    if (isFlying || isMoving) {
+        return;
+    }
+
+    float time_ms = DEFAULT_HEIGHT / DEFAULT_VELOCITY * 1000;
+
+    isFlying = true;
+    isMoving = true;
+    set_setpoint(0, 0, 0, DEFAULT_HEIGHT);
+
+    opentimers_scheduleIn(
+        moveDistance_timerId,
+        time_ms,
+        TIME_MS,
+        TIMER_ONESHOT,
+        vel_take_off_done
+    );
+}
+
+void vel_land_done(opentimers_id_t id) {
+    send_notify_setpoints_stop(0);
+    send_stop_setpoint();
+    isFlying = false;
+    isMoving = false;
+}
+
+void vel_land() {
+    if (!isFlying || isMoving) {
+        return;
+    }
+
+    // current height
+    float height_m = multiranger_get_down_mm() / 1000.0;
+    float time_ms = height_m / DEFAULT_VELOCITY * 1000;
+
+    isMoving = true;
+    set_setpoint(0, 0, 0, 0);
+    
+    opentimers_scheduleIn(
+        moveDistance_timerId,
+        time_ms,
+        TIME_MS,
+        TIMER_ONESHOT,
+        vel_land_done
+    );
+}
+
+// =============================================================
+
+//void cmultiranger_reset_position_estimator()
+//{
+//  uint8_t value = 1;
+//  param_set(index_kalman_resetEstimation, &value, 1);
+
+//  value = 0;
+//  param_set(index_kalman_resetEstimation, &value, 1);
+//}
+
+//【Move】
+
+// void moveDistance_xy(float distance_x_m, float distance_y_m){
+    
+//     if (!isFlying || isMoving ) {
+//         return;
+//     }
+
+//     // Calculate the time to move
+//     float distance = sqrt(distance_x_m * distance_x_m + distance_y_m * distance_y_m);
+//     uint16_t time_ms = distance / DEFAULT_VELOCITY * 1000;
+
+//     // Calculate the velocity
+//     float velocity_x = distance_x_m / distance * DEFAULT_VELOCITY;
+//     float velocity_y = distance_y_m / distance * DEFAULT_VELOCITY;
+
+//     // Send the velocity to the Crazyflie
+//     isMoving = true;
+//     send_hover_setpoint(velocity_x, velocity_y, 0, DEFAULT_HEIGHT);
+
+//     // Start the timer
+//     opentimers_scheduleIn(
+//         moveDistance_timerId,
+//         time_ms,
+//         TIME_MS,
+//         TIMER_ONESHOT,
+//         moveDistance_xy_done
+//     );
+// }
+
+// void moveDistance_xy_done() {
+//     send_hover_setpoint(0, 0, 0, DEFAULT_HEIGHT);
+//     isMoving = false;
+// }
 
 #endif /* OPENWSN_CMULTIRANGER_C */

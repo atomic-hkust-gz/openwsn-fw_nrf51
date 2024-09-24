@@ -1,9 +1,9 @@
 <!DOCTYPE CrossStudio_Session_File>
 <session>
  <Bookmarks>
-  <BookmarkItem objectName="" line="93" column="-1" path="D:/Projects/Atomic/swarm/openwsn-fw_atomic/bsp/boards/nrf51822_crazyflie2/leds.c" number="2" extra="leds_error_toggle();" color="5"/>
-  <BookmarkItem objectName="" line="36" column="-1" path="D:/Projects/Atomic/swarm/openwsn-fw_atomic/bsp/boards/nrf51822_crazyflie2/leds.c" number="1" extra="void leds_error_toggle(void) {" color="5"/>
   <BookmarkItem objectName="" line="106" column="-1" path="D:/Projects/Atomic/swarm/openwsn-fw_atomic/bsp/boards/nrf51822_crazyflie2/leds.c" number="3" extra="leds_error_toggle();" color="5"/>
+  <BookmarkItem objectName="" line="36" column="-1" path="D:/Projects/Atomic/swarm/openwsn-fw_atomic/bsp/boards/nrf51822_crazyflie2/leds.c" number="1" extra="void leds_error_toggle(void) {" color="5"/>
+  <BookmarkItem objectName="" line="93" column="-1" path="D:/Projects/Atomic/swarm/openwsn-fw_atomic/bsp/boards/nrf51822_crazyflie2/leds.c" number="2" extra="leds_error_toggle();" color="5"/>
  </Bookmarks>
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
   <BreakpointListItem trigger="" line="206" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="../../openapps/cstorm/cstorm.c" useHWbreakpoint="false"/>
@@ -11,9 +11,7 @@
   <Exceptions set="HardFault"/>
  </Breakpoints>
  <ExecutionProfileWindow/>
- <FrameBufferWindow>
-  <FrameBufferWindow bufferHeight="-1" addressSpace="" addressText="" bufferWidth="-1"/>
- </FrameBufferWindow>
+ <FrameBuffer/>
  <Memory1>
   <MemoryWindow addressSpace="" dataSize="1" autoEvaluate="0" viewMode="0" viewType="4" addressOrder="0" columnsText="" refreshPeriod="0" name="01bsp_rtt" sizeText="" addressText=""/>
   <MemoryWindow addressSpace="" dataSize="1" autoEvaluate="0" viewMode="0" viewType="4" addressOrder="0" columnsText="" refreshPeriod="0" name="01bsp_ppi" sizeText="" addressText=""/>
@@ -180,7 +178,7 @@
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="2278" useTextEdit="1" path="../../openstack/02a-MAClow/IEEE802154E.c" left="0" top="2273" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="../../openapps/cstorm/cstorm.h" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="66" useTextEdit="1" path="../../openapps/openapps.c" left="0" top="57" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="18" y="373" useTextEdit="1" path="../../inc/config.h" left="3" top="333" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="2" y="373" useTextEdit="1" path="../../inc/config.h" left="0" top="333" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="5" y="75" useTextEdit="1" openedFrom="D:/Projects/Atomic/swarm/openwsn-fw_atomic/openstack/02a-MAClow/IEEE802154E.c" path="../../bsp/boards/nrf51822_crazyflie2/leds.c" left="0" top="34" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="19" y="53" useTextEdit="1" path="../../openstack/openstack.c" left="0" top="43" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="1" y="22" useTextEdit="1" path="../common/03oos_openwsn/03oos_openwsn.c" left="0" top="0" codecName="Default"/>

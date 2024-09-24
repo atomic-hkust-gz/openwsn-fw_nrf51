@@ -45,6 +45,7 @@
 #include "cf_pm.h"
 #include "cf_systick.h"
 #include "cf_api_commander_high_level.h"
+#include "cf_api_commander.h"
 #include "cf_multiranger.h"
 
 //=========================== defines =========================================
@@ -90,7 +91,7 @@ void mainloop()
     tick = systickGetTick(); // unsigned int
 
 // MULTIRANGER CODE
-#if 0
+#if 1
     if (tick == 5000 && !enMultiranger)
     {
         multiranger_init();
@@ -106,7 +107,28 @@ void mainloop()
     }
 #endif
 
-// FLY CODE
+// FLY CODE (Generic Setpoint)
+#if 0
+    if (tick == 10000 && a)
+    {
+       send_hover_setpoint(0.0,0.0,0.0,0.6);
+       a = false;
+    }
+
+    //if (tick >= 12000 && tick < 18000)
+    //{
+    //   send_hover_setpoint(0.0,0.0,0.0,0.4);
+    //}
+
+    if (tick >= 18000 && tick < 23000)
+    {
+        crazyflieEmergencyStop();
+        leds_all_off();
+        crazyflieShutdown();
+    }
+#endif
+
+// FLY CODE (High-Level)
 #if 0
     if (tick == 5000 && !enHighLevel)
     {

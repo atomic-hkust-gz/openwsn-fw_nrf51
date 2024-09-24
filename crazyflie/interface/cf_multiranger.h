@@ -57,6 +57,7 @@ void multiranger_init();
 void multiranger_handle(uint8_t *data, uint8_t len);
 
 // Getter
+bool multiranger_isInitialized();
 uint16_t multiranger_get_front_mm();
 uint16_t multiranger_get_back_mm();
 uint16_t multiranger_get_left_mm();

@@ -48,6 +48,9 @@
 
 //=========================== variables =======================================
 
+// static bool isMounted = false;
+static bool isInitialized = false;
+
 static struct mutiranger_data mutiranger_values = {0, 0, 0, 0, 0, 0};
 static struct mutiranger_isClose_data mutiranger_isClose = {0, 0, 0, 0, 0, 0};
 
@@ -96,10 +99,17 @@ void multiranger_init()
 
     // start log block
     log_startLogBlock(block_id, 10);  //the period will be multiplied by 10(in stm32), so 100 means 1000ms
+
+    isInitialized = true;
 }
 
 void multiranger_handle(uint8_t *data, uint8_t len)
 {
+
+    if (!isInitialized)
+    {
+        return;
+    }
 
     if (len < 4 + sizeof(mutiranger_values))
     {
@@ -136,6 +146,12 @@ void multiranger_handle(uint8_t *data, uint8_t len)
 }
 
 // Getter
+
+bool multiranger_isInitialized()
+{
+    return isInitialized;
+}
+
 uint16_t multiranger_get_front_mm()
 {
     return mutiranger_values.front;
